@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let cells = [];
     let selectedCellIndex = null;
 
-    // Difficulty settings (number of empty cells to remove)
     const difficulties = {
         easy: 30,
         medium: 40,
@@ -26,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
             diffDisplay.textContent = e.target.value.toUpperCase();
             startNewGame();
         });
+
+        // Keyboard support for typing numbers and deleting
+        document.addEventListener('keydown', handleKeyPress);
     }
 
     function createBoard() {
@@ -43,13 +45,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createNumpad() {
         numpadEl.innerHTML = '';
+        // Numbers 1-9
         for (let i = 1; i <= 9; i++) {
             const btn = document.createElement('button');
             btn.classList.add('num-btn');
             btn.textContent = i;
-            btn.addEventListener('click', () => enterNumber(i));
+            btn.addEventListener('click', () => enterNumber(i.toString()));
             numpadEl.appendChild(btn);
         }
+        // Erase Button
+        const eraseBtn = document.createElement('button');
+        eraseBtn.classList.add('num-btn');
+        eraseBtn.textContent = '⌫';
+        eraseBtn.addEventListener('click', () => enterNumber(''));
+        numpadEl.appendChild(eraseBtn);
     }
 
     function selectCell(index) {
@@ -60,11 +69,21 @@ document.addEventListener('DOMContentLoaded', () => {
         cells[selectedCellIndex].classList.add('selected');
     }
 
-    function enterNumber(num) {
+    function handleKeyPress(e) {
+        if (selectedCellIndex === null) return;
+        
+        if (e.key >= '1' && e.key <= '9') {
+            enterNumber(e.key);
+        } else if (e.key === 'Backspace' || e.key === 'Delete') {
+            enterNumber('');
+        }
+    }
+
+    function enterNumber(value) {
         if (selectedCellIndex !== null) {
             const cell = cells[selectedCellIndex];
             if (!cell.classList.contains('given')) {
-                cell.textContent = num;
+                cell.textContent = value;
             }
         }
     }
@@ -73,18 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const difficulty = difficultySelect.value;
         const blanksToCreate = difficulties[difficulty];
         
-        // Clear board visually
         cells.forEach(cell => {
             cell.textContent = '';
             cell.classList.remove('given', 'selected');
         });
         selectedCellIndex = null;
 
-        // Generate a valid board and remove numbers
         const board = generateBoard();
         removeNumbers(board, blanksToCreate);
 
-        // Populate DOM
         for (let i = 0; i < 81; i++) {
             if (board[i] !== 0) {
                 cells[i].textContent = board[i];
@@ -93,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Basic Sudoku Generator ---
     function generateBoard() {
         const board = new Array(81).fill(0);
         solve(board);
@@ -103,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function solve(board) {
         for (let i = 0; i < 81; i++) {
             if (board[i] === 0) {
-                // Shuffle numbers 1-9 to ensure random boards
                 const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
                 for (let num of nums) {
                     if (isValid(board, i, num)) {
@@ -125,10 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const startCol = Math.floor(col / 3) * 3;
 
         for (let i = 0; i < 9; i++) {
-            if (board[row * 9 + i] === num) return false; // Check row
-            if (board[i * 9 + col] === num) return false; // Check col
+            if (board[row * 9 + i] === num) return false;
+            if (board[i * 9 + col] === num) return false;
             
-            // Check 3x3 box
             const boxRow = startRow + Math.floor(i / 3);
             const boxCol = startCol + (i % 3);
             if (board[boxRow * 9 + boxCol] === num) return false;

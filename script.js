@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Erase Button
         const eraseBtn = document.createElement('button');
         eraseBtn.classList.add('num-btn');
-        eraseBtn.textContent = '⌫';
+        eraseBtn.textContent = 'x'; // Changed from ⌫ to x
         eraseBtn.addEventListener('click', () => enterNumber(''));
         numpadEl.appendChild(eraseBtn);
     }

@@ -80,6 +80,7 @@ h1 {
 #sudoku-board {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr); /* This keeps empty rows from shrinking */
     border: 2px solid var(--grid-line);
     aspect-ratio: 1 / 1;
     margin-bottom: 20px;
@@ -123,19 +124,19 @@ h1 {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
+    justify-items: center; /* Centers the numbers horizontally */
 }
 
 .num-btn {
-    background-color: var(--cell-highlight);
-    border: 1px solid var(--grid-line);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-size: 1.5rem;
-    padding: 15px 0;
+    background: transparent;
+    border: none;
+    color: var(--text-muted); /* Colored numbers */
+    font-size: 1.8rem;
     cursor: pointer;
-    transition: background-color 0.2s;
+    padding: 10px;
+    transition: color 0.2s;
 }
 
 .num-btn:active {
-    background-color: var(--cell-selected);
+    color: var(--text-primary); /* Brightens when clicked */
 }

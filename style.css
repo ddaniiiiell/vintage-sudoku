@@ -169,3 +169,43 @@ h1 {
 .num-btn:active {
     color: var(--text-primary); /* Brightens when clicked */
 }
+
+/* Utility class to hide elements */
+.hidden {
+    display: none !important;
+}
+
+/* Victory Screen Styling */
+#victory-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid var(--grid-line);
+    aspect-ratio: 1 / 1;
+    margin-bottom: 20px;
+    background-color: var(--cell-highlight);
+}
+
+#victory-screen h2 {
+    color: var(--accent-color);
+    margin-bottom: 20px;
+    font-size: 2rem;
+    letter-spacing: 2px;
+}
+
+#new-game-btn {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: opacity 0.2s;
+}
+
+#new-game-btn:active {
+    opacity: 0.8;
+}   

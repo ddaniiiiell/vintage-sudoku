@@ -6,12 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const diffDisplay = document.getElementById('diff-display');
     const correctDisplay = document.getElementById('correct-display');
     const mistakeDisplay = document.getElementById('mistake-display');
+    const victoryScreen = document.getElementById('victory-screen');
+    const newGameBtn = document.getElementById('new-game-btn');
 
     let cells = [];
     let selectedCellIndex = null;
     let solvedBoard = []; 
     let correctCount = 0;
     let mistakeCount = 0;
+    let targetCorrectCount = 0; // Tracks how many blanks exist in the current puzzle
     
     const difficulties = {
         easy: 30,
@@ -20,20 +23,15 @@ document.addEventListener('DOMContentLoaded', () => {
         extreme: 60
     };
 
-    function init() {
-        createBoard();
-        createNumpad();
-        startNewGame();
-
-        resetBtn.addEventListener('click', startNewGame);
-        difficultySelect.addEventListener('change', (e) => {
+    difficultySelect.addEventListener('change', (e) => {
             diffDisplay.textContent = e.target.value.toUpperCase();
             startNewGame();
         });
 
-        // Keyboard support for typing numbers and deleting
+        // New listener for the victory screen button
+        newGameBtn.addEventListener('click', startNewGame);
+
         document.addEventListener('keydown', handleKeyPress);
-    }
 
     function createBoard() {
         boardEl.innerHTML = '';
@@ -113,6 +111,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Update correct counter
                     correctCount++;
                     correctDisplay.textContent = `${correctCount} CORRECT`;
+
+                    // Check for win condition
+                    if (correctCount === targetCorrectCount) {
+                        setTimeout(() => {
+                            boardEl.classList.add('hidden');
+                            numpadEl.classList.add('hidden');
+                            victoryScreen.classList.remove('hidden');
+                        }, 500); // 500ms delay before showing victory screen
+                    }
+
                 } else {
                     // Incorrect answer
                     cell.textContent = ''; 
@@ -132,8 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startNewGame() {
         const difficulty = difficultySelect.value;
-        const blanksToCreate = difficulties[difficulty];
+        targetCorrectCount = difficulties[difficulty]; // Set the win condition
         
+        // Reset UI visibility
+        boardEl.classList.remove('hidden');
+        numpadEl.classList.remove('hidden');
+        victoryScreen.classList.add('hidden');
+
         // Reset counters
         correctCount = 0;
         mistakeCount = 0;
@@ -148,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const board = generateBoard();
         solvedBoard = [...board]; 
-        removeNumbers(board, blanksToCreate);
+        removeNumbers(board, targetCorrectCount);
 
         for (let i = 0; i < 81; i++) {
             if (board[i] !== 0) {

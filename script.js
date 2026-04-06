@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. All DOM Elements
     const boardEl = document.getElementById('sudoku-board');
     const numpadEl = document.getElementById('numpad');
     const resetBtn = document.getElementById('reset-btn');
@@ -9,13 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const victoryScreen = document.getElementById('victory-screen');
     const newGameBtn = document.getElementById('new-game-btn');
 
+    // 2. Game State Variables
     let cells = [];
     let selectedCellIndex = null;
-    let solvedBoard = []; 
+    let solvedBoard = [];
     let correctCount = 0;
     let mistakeCount = 0;
-    let targetCorrectCount = 0; // Tracks how many blanks exist in the current puzzle
-    
+    let targetCorrectCount = 0;
+
     const difficulties = {
         easy: 30,
         medium: 40,
@@ -23,16 +25,23 @@ document.addEventListener('DOMContentLoaded', () => {
         extreme: 60
     };
 
-    difficultySelect.addEventListener('change', (e) => {
+    // 3. Initialization
+    function init() {
+        createBoard();
+        createNumpad();
+        startNewGame();
+
+        // Event Listeners
+        resetBtn.addEventListener('click', startNewGame);
+        difficultySelect.addEventListener('change', (e) => {
             diffDisplay.textContent = e.target.value.toUpperCase();
             startNewGame();
         });
-
-        // New listener for the victory screen button
         newGameBtn.addEventListener('click', startNewGame);
-
         document.addEventListener('keydown', handleKeyPress);
+    }
 
+    // 4. Board & UI Creation
     function createBoard() {
         boardEl.innerHTML = '';
         cells = [];
@@ -48,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createNumpad() {
         numpadEl.innerHTML = '';
-        // Numbers 1-9
         for (let i = 1; i <= 9; i++) {
             const btn = document.createElement('button');
             btn.classList.add('num-btn');
@@ -56,16 +64,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => enterNumber(i.toString()));
             numpadEl.appendChild(btn);
         }
-        // Erase Button
         const eraseBtn = document.createElement('button');
         eraseBtn.classList.add('num-btn');
-        eraseBtn.textContent = 'x'; // Changed from ⌫ to x
+        eraseBtn.textContent = 'x';
         eraseBtn.addEventListener('click', () => enterNumber(''));
         numpadEl.appendChild(eraseBtn);
     }
 
+    // 5. Interaction Logic
     function selectCell(index) {
-        // If clicking the already selected box, unselect it
         if (selectedCellIndex === index) {
             cells[selectedCellIndex].classList.remove('selected');
             selectedCellIndex = null;
@@ -118,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             boardEl.classList.add('hidden');
                             numpadEl.classList.add('hidden');
                             victoryScreen.classList.remove('hidden');
-                        }, 500); // 500ms delay before showing victory screen
+                        }, 500);
                     }
 
                 } else {
@@ -138,9 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // 6. Game Generation Logic
     function startNewGame() {
         const difficulty = difficultySelect.value;
-        targetCorrectCount = difficulties[difficulty]; // Set the win condition
+        targetCorrectCount = difficulties[difficulty]; 
         
         // Reset UI visibility
         boardEl.classList.remove('hidden');

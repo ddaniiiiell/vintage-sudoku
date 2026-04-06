@@ -1,259 +1,151 @@
-/* script.js */
+document.addEventListener('DOMContentLoaded', () => {
+    const boardEl = document.getElementById('sudoku-board');
+    const numpadEl = document.getElementById('numpad');
+    const resetBtn = document.getElementById('reset-btn');
+    const difficultySelect = document.getElementById('difficulty-select');
+    const diffDisplay = document.getElementById('diff-display');
 
-// --- Global Variables and Game State ---
-let currentDifficulty = 'easy';
-let prefilledBoard = [];
-let userBoard = [];
-const GRID_SIZE = 9;
+    let cells = [];
+    let selectedCellIndex = null;
 
-// A basic solved Sudoku board for "Easy" difficulty. For other levels, we can derive new boards.
-const solvedBaseBoard = [
-    [5, 3, 4, 6, 7, 8, 9, 1, 2],
-    [6, 7, 2, 1, 9, 5, 3, 4, 8],
-    [1, 9, 8, 3, 4, 2, 5, 6, 7],
-    [8, 5, 9, 7, 6, 1, 4, 2, 3],
-    [4, 2, 6, 8, 5, 3, 7, 9, 1],
-    [7, 1, 3, 9, 2, 4, 8, 5, 6],
-    [9, 6, 1, 5, 3, 7, 2, 8, 4],
-    [2, 8, 7, 4, 1, 9, 6, 3, 5],
-    [3, 4, 5, 2, 8, 6, 1, 7, 9]
-];
+    // Difficulty settings (number of empty cells to remove)
+    const difficulties = {
+        easy: 30,
+        medium: 40,
+        hard: 50,
+        extreme: 60
+    };
 
-// Determine number of cells to remove for each difficulty level
-const difficultySettings = {
-    'easy': 40,
-    'medium': 50,
-    'hard': 60
-};
+    function init() {
+        createBoard();
+        createNumpad();
+        startNewGame();
 
-// --- DOM Elements ---
-const gridElement = document.getElementById('sudoku-grid');
-const resetBtn = document.getElementById('reset-button');
-const difficultyBtns = document.querySelectorAll('.diff-btn');
-let selectedCell = null;
-
-// --- Helper Functions ---
-
-function deepCopyGrid(grid) {
-    return grid.map(row => [...row]);
-}
-
-// Fisher-Yates shuffle for a random set of cell indices
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+        resetBtn.addEventListener('click', startNewGame);
+        difficultySelect.addEventListener('change', (e) => {
+            diffDisplay.textContent = e.target.value.toUpperCase();
+            startNewGame();
+        });
     }
-    return array;
-}
 
-// Generate an initial board based on difficulty from a pre-solved one
-function generateInitialBoard(difficulty) {
-    prefilledBoard = deepCopyGrid(solvedBaseBoard);
-    userBoard = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
+    function createBoard() {
+        boardEl.innerHTML = '';
+        cells = [];
+        for (let i = 0; i < 81; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.index = i;
+            cell.addEventListener('click', () => selectCell(i));
+            boardEl.appendChild(cell);
+            cells.push(cell);
+        }
+    }
 
-    const totalCells = GRID_SIZE * GRID_SIZE;
-    const cellsToClear = difficultySettings[difficulty];
-    
-    // Create an array of 0-80 indices and shuffle them
-    const indices = Array.from({length: totalCells}, (_, i) => i);
-    const shuffledIndices = shuffleArray(indices);
-    const cellsToClearList = shuffledIndices.slice(0, cellsToClear);
+    function createNumpad() {
+        numpadEl.innerHTML = '';
+        for (let i = 1; i <= 9; i++) {
+            const btn = document.createElement('button');
+            btn.classList.add('num-btn');
+            btn.textContent = i;
+            btn.addEventListener('click', () => enterNumber(i));
+            numpadEl.appendChild(btn);
+        }
+    }
 
-    // Clear cells from both boards to start game
-    cellsToClearList.forEach(index => {
-        const row = Math.floor(index / GRID_SIZE);
-        const col = index % GRID_SIZE;
-        prefilledBoard[row][col] = 0;
-    });
+    function selectCell(index) {
+        if (selectedCellIndex !== null) {
+            cells[selectedCellIndex].classList.remove('selected');
+        }
+        selectedCellIndex = index;
+        cells[selectedCellIndex].classList.add('selected');
+    }
 
-    // Populate user board with initial numbers
-    for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
-            if (prefilledBoard[r][c] !== 0) {
-                userBoard[r][c] = prefilledBoard[r][c];
+    function enterNumber(num) {
+        if (selectedCellIndex !== null) {
+            const cell = cells[selectedCellIndex];
+            if (!cell.classList.contains('given')) {
+                cell.textContent = num;
             }
         }
     }
-}
 
-// Clear visual effects from grid cells
-function clearVisualEffects() {
-    if (selectedCell) {
-        selectedCell.classList.remove('selected', 'editable-active');
-        selectedCell = null;
-    }
-}
+    function startNewGame() {
+        const difficulty = difficultySelect.value;
+        const blanksToCreate = difficulties[difficulty];
+        
+        // Clear board visually
+        cells.forEach(cell => {
+            cell.textContent = '';
+            cell.classList.remove('given', 'selected');
+        });
+        selectedCellIndex = null;
 
-// Render the entire grid from the current `userBoard` state
-function renderGrid() {
-    gridElement.innerHTML = ''; // Clear current grid
+        // Generate a valid board and remove numbers
+        const board = generateBoard();
+        removeNumbers(board, blanksToCreate);
 
-    for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
-            const cellDiv = document.createElement('div');
-            cellDiv.classList.add('sudoku-cell');
-            cellDiv.dataset.row = r;
-            cellDiv.dataset.col = c;
-
-            const valueSpan = document.createElement('span');
-            valueSpan.classList.add('sudoku-cell-content');
-            
-            if (prefilledBoard[r][c] !== 0) {
-                cellDiv.classList.add('prefilled');
-                valueSpan.textContent = prefilledBoard[r][c];
-            } else if (userBoard[r][c] !== 0) {
-                valueSpan.textContent = userBoard[r][c];
+        // Populate DOM
+        for (let i = 0; i < 81; i++) {
+            if (board[i] !== 0) {
+                cells[i].textContent = board[i];
+                cells[i].classList.add('given');
             }
-
-            cellDiv.appendChild(valueSpan);
-            gridElement.appendChild(cellDiv);
-        }
-    }
-}
-
-// Check if a number can be placed in a given cell according to Sudoku rules
-function isValidMove(row, col, num) {
-    // Check row
-    for (let c = 0; c < GRID_SIZE; c++) {
-        if (userBoard[row][c] === num && c !== col) return false;
-    }
-    // Check col
-    for (let r = 0; r < GRID_SIZE; r++) {
-        if (userBoard[r][col] === num && r !== row) return false;
-    }
-    // Check 3x3 block
-    const blockRow = Math.floor(row / 3) * 3;
-    const blockCol = Math.floor(col / 3) * 3;
-    for (let r = blockRow; r < blockRow + 3; r++) {
-        for (let c = blockCol; c < blockCol + 3; c++) {
-            if (userBoard[r][c] === num && (r !== row || c !== col)) return false;
-        }
-    }
-    return true;
-}
-
-// Check if the current user board is a valid and full solution
-function isGameWon() {
-    // Check all cells are filled
-    for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
-            if (userBoard[r][c] === 0) return false;
         }
     }
 
-    // Check all constraints on the full board (simple but effective for a completed board)
-    for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
-            const num = userBoard[r][c];
-            // Clear the cell temporarily for validation logic
-            userBoard[r][c] = 0;
-            if (!isValidMove(r, c, num)) {
-                userBoard[r][c] = num; // restore
+    // --- Basic Sudoku Generator ---
+    function generateBoard() {
+        const board = new Array(81).fill(0);
+        solve(board);
+        return board;
+    }
+
+    function solve(board) {
+        for (let i = 0; i < 81; i++) {
+            if (board[i] === 0) {
+                // Shuffle numbers 1-9 to ensure random boards
+                const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+                for (let num of nums) {
+                    if (isValid(board, i, num)) {
+                        board[i] = num;
+                        if (solve(board)) return true;
+                        board[i] = 0;
+                    }
+                }
                 return false;
             }
-            userBoard[r][c] = num; // restore
         }
-    }
-    return true;
-}
-
-// --- Interaction Logic ---
-
-// Set the active difficulty button and regenerate board
-function setDifficulty(newDifficulty) {
-    if (currentDifficulty === newDifficulty) return;
-    
-    currentDifficulty = newDifficulty;
-    difficultyBtns.forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.diff-btn[data-difficulty="${currentDifficulty}"]`).classList.add('active');
-
-    resetBoard();
-}
-
-// Handle cell selection
-function handleCellClick(event) {
-    const clickedCell = event.target.closest('.sudoku-cell');
-    
-    if (!clickedCell || clickedCell.classList.contains('prefilled')) {
-        clearVisualEffects();
-        return;
+        return true;
     }
 
-    if (selectedCell === clickedCell) {
-        // Double click/tap - enter 'editable' mode
-        selectedCell.classList.toggle('editable-active');
-    } else {
-        clearVisualEffects();
-        selectedCell = clickedCell;
-        selectedCell.classList.add('selected');
+    function isValid(board, index, num) {
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+        const startRow = Math.floor(row / 3) * 3;
+        const startCol = Math.floor(col / 3) * 3;
+
+        for (let i = 0; i < 9; i++) {
+            if (board[row * 9 + i] === num) return false; // Check row
+            if (board[i * 9 + col] === num) return false; // Check col
+            
+            // Check 3x3 box
+            const boxRow = startRow + Math.floor(i / 3);
+            const boxCol = startCol + (i % 3);
+            if (board[boxRow * 9 + boxCol] === num) return false;
+        }
+        return true;
     }
-}
 
-// Handle keyboard input for selecting a cell and typing numbers
-function handleKeyDown(event) {
-    if (!selectedCell) return;
-
-    const row = parseInt(selectedCell.dataset.row);
-    const col = parseInt(selectedCell.dataset.col);
-
-    if (selectedCell.classList.contains('editable-active')) {
-        // Cell is in 'input' mode: Handle number entry
-        const isDigit = /^[1-9]$/.test(event.key);
-        const isDelete = ['Backspace', 'Delete', '0'].includes(event.key);
-
-        if (isDigit) {
-            const num = parseInt(event.key);
-            userBoard[row][col] = num;
-            renderGrid(); // Redraw grid with new number
-            clearVisualEffects(); // Clear all state after input
-
-            if (isGameWon()) {
-                setTimeout(() => alert('You solved it! A moment of clarity.'), 10);
+    function removeNumbers(board, count) {
+        let removed = 0;
+        while (removed < count) {
+            const index = Math.floor(Math.random() * 81);
+            if (board[index] !== 0) {
+                board[index] = 0;
+                removed++;
             }
-        } else if (isDelete) {
-            userBoard[row][col] = 0;
-            renderGrid();
-            clearVisualEffects();
         }
-        
-    } else if (event.key.startsWith('Arrow')) {
-        // Cell is only highlighted: Handle navigation
-        let nextRow = row, nextCol = col;
-        switch (event.key) {
-            case 'ArrowUp': nextRow = Math.max(0, row - 1); break;
-            case 'ArrowDown': nextRow = Math.min(GRID_SIZE - 1, row + 1); break;
-            case 'ArrowLeft': nextCol = Math.max(0, col - 1); break;
-            case 'ArrowRight': nextCol = Math.min(GRID_SIZE - 1, col + 1); break;
-        }
-        
-        // Select new cell with same state
-        const nextCell = document.querySelector(`.sudoku-cell[data-row="${nextRow}"][data-col="${nextCol}"]`);
-        if (nextCell) {
-            nextCell.click();
-        }
-        event.preventDefault(); // Prevent page scroll
     }
-}
 
-// Reset the entire board to its starting state for current difficulty
-function resetBoard() {
-    clearVisualEffects();
-    generateInitialBoard(currentDifficulty);
-    renderGrid();
-}
-
-// --- Initialization ---
-function init() {
-    generateInitialBoard(currentDifficulty);
-    renderGrid();
-
-    // Event Listeners
-    difficultyBtns.forEach(btn => btn.addEventListener('click', (e) => setDifficulty(e.target.dataset.difficulty)));
-    resetBtn.addEventListener('click', resetBoard);
-    gridElement.addEventListener('click', handleCellClick);
-    document.addEventListener('keydown', handleKeyDown);
-}
-
-// Start game
-init();
+    init();
+});

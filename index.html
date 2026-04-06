@@ -2,33 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vintage Purple Sudoku</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vintage Sudoku</title>
     <link rel="stylesheet" href="style.css">
-    <script defer src="script.js"></script>
 </head>
 <body>
-    <div class="main-container">
+    <div class="app-container">
         <header>
-            <h1 class="vintage-title">VINTAGE PURPLE SUDOKU</h1>
+            <button id="reset-btn" aria-label="Reset Puzzle">↺</button>
+            <h1>SuDoKu</h1>
+            <select id="difficulty-select">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+                <option value="extreme" selected>Extreme</option>
+            </select>
         </header>
-        <nav class="controls">
-            <div class="difficulty-selectors">
-                <button class="diff-btn active" id="easy-btn" data-difficulty="easy">Easy</button>
-                <button class="diff-btn" id="medium-btn" data-difficulty="medium">Medium</button>
-                <button class="diff-btn" id="hard-btn" data-difficulty="hard">Hard</button>
+        
+        <div class="status-bar">
+            <span>0 CORRECT</span>
+            <span id="diff-display">EXTREME</span>
+            <span>0 MISTAKES</span>
+        </div>
+
+        <div id="sudoku-board"></div>
+
+        <div id="numpad">
             </div>
-            <button class="action-btn reset-btn" id="reset-button">Reset Grid</button>
-        </nav>
-        <main>
-            <div class="sudoku-container">
-                <div id="sudoku-grid" class="sudoku-grid">
-                    </div>
-            </div>
-        </main>
-        <footer>
-            <p class="minimal-footer">A simple game in the dark. Enjoy the challenge.</p>
-        </footer
     </div>
+    <script src="script.js"></script>
 </body>
 </html>

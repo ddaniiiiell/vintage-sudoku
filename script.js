@@ -4,10 +4,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('reset-btn');
     const difficultySelect = document.getElementById('difficulty-select');
     const diffDisplay = document.getElementById('diff-display');
+    const correctDisplay = document.getElementById('correct-display');
+    const mistakeDisplay = document.getElementById('mistake-display');
 
     let cells = [];
     let selectedCellIndex = null;
-    let solvedBoard = []; // Add this to store the solution
+    let solvedBoard = []; 
+    let correctCount = 0;
+    let mistakeCount = 0;
     
     const difficulties = {
         easy: 30,
@@ -63,6 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function selectCell(index) {
+        // If clicking the already selected box, unselect it
+        if (selectedCellIndex === index) {
+            cells[selectedCellIndex].classList.remove('selected');
+            selectedCellIndex = null;
+            return;
+        }
+
         if (selectedCellIndex !== null) {
             cells[selectedCellIndex].classList.remove('selected');
         }
@@ -85,31 +96,35 @@ document.addEventListener('DOMContentLoaded', () => {
             const cell = cells[selectedCellIndex];
             
             if (!cell.classList.contains('given')) {
-                // Handle the erase button
                 if (value === '') {
                     cell.textContent = '';
                     cell.classList.remove('user-input');
                     return;
                 }
 
-                // Check if the input matches the background solution
                 if (parseInt(value) === solvedBoard[selectedCellIndex]) {
                     // Correct answer
                     cell.textContent = value;
                     cell.classList.add('user-input');
                     
-                    // Deselect the box
                     cell.classList.remove('selected');
                     selectedCellIndex = null;
+
+                    // Update correct counter
+                    correctCount++;
+                    correctDisplay.textContent = `${correctCount} CORRECT`;
                 } else {
                     // Incorrect answer
-                    cell.textContent = ''; // Delete the input
+                    cell.textContent = ''; 
                     cell.classList.remove('user-input');
                     
-                    // Trigger the rumble animation
-                    cell.classList.remove('rumble'); // Reset animation if clicked quickly
-                    void cell.offsetWidth; // Trigger reflow to restart animation
+                    cell.classList.remove('rumble'); 
+                    void cell.offsetWidth; 
                     cell.classList.add('rumble');
+
+                    // Update mistake counter
+                    mistakeCount++;
+                    mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
                 }
             }
         }
@@ -119,14 +134,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const difficulty = difficultySelect.value;
         const blanksToCreate = difficulties[difficulty];
         
+        // Reset counters
+        correctCount = 0;
+        mistakeCount = 0;
+        correctDisplay.textContent = `${correctCount} CORRECT`;
+        mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
+
         cells.forEach(cell => {
             cell.textContent = '';
-            cell.classList.remove('given', 'selected', 'user-input'); // Also clear user-input class
+            cell.classList.remove('given', 'selected', 'user-input'); 
         });
         selectedCellIndex = null;
 
         const board = generateBoard();
-        solvedBoard = [...board]; // Save the complete solution in the background
+        solvedBoard = [...board]; 
         removeNumbers(board, blanksToCreate);
 
         for (let i = 0; i < 81; i++) {

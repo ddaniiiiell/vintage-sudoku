@@ -118,6 +118,35 @@ h1 {
 .cell.given {
     color: var(--accent-color);
 }
+:root {
+    /* ... keep your existing variables ... */
+    --user-input: #bda8f2; /* Light purple for player inputs */
+}
+
+/* ... existing CSS ... */
+
+.cell.given {
+    color: var(--accent-color);
+}
+
+/* New styling for correctly inputted numbers */
+.cell.user-input {
+    color: var(--user-input);
+}
+
+/* The shake animation for incorrect answers */
+@keyframes rumble {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-4px) rotate(-1deg); }
+    40% { transform: translateX(4px) rotate(1deg); }
+    60% { transform: translateX(-4px) rotate(-1deg); }
+    80% { transform: translateX(4px) rotate(1deg); }
+    100% { transform: translateX(0); }
+}
+
+.rumble {
+    animation: rumble 0.3s ease-in-out;
+}
 
 /* Numpad Styling */
 #numpad {

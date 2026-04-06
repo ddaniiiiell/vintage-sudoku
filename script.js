@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let cells = [];
     let selectedCellIndex = null;
-
+    let solvedBoard = []; // Add this to store the solution
+    
     const difficulties = {
         easy: 30,
         medium: 40,
@@ -82,8 +83,34 @@ document.addEventListener('DOMContentLoaded', () => {
     function enterNumber(value) {
         if (selectedCellIndex !== null) {
             const cell = cells[selectedCellIndex];
+            
             if (!cell.classList.contains('given')) {
-                cell.textContent = value;
+                // Handle the erase button
+                if (value === '') {
+                    cell.textContent = '';
+                    cell.classList.remove('user-input');
+                    return;
+                }
+
+                // Check if the input matches the background solution
+                if (parseInt(value) === solvedBoard[selectedCellIndex]) {
+                    // Correct answer
+                    cell.textContent = value;
+                    cell.classList.add('user-input');
+                    
+                    // Deselect the box
+                    cell.classList.remove('selected');
+                    selectedCellIndex = null;
+                } else {
+                    // Incorrect answer
+                    cell.textContent = ''; // Delete the input
+                    cell.classList.remove('user-input');
+                    
+                    // Trigger the rumble animation
+                    cell.classList.remove('rumble'); // Reset animation if clicked quickly
+                    void cell.offsetWidth; // Trigger reflow to restart animation
+                    cell.classList.add('rumble');
+                }
             }
         }
     }
@@ -94,11 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         cells.forEach(cell => {
             cell.textContent = '';
-            cell.classList.remove('given', 'selected');
+            cell.classList.remove('given', 'selected', 'user-input'); // Also clear user-input class
         });
         selectedCellIndex = null;
 
         const board = generateBoard();
+        solvedBoard = [...board]; // Save the complete solution in the background
         removeNumbers(board, blanksToCreate);
 
         for (let i = 0; i < 81; i++) {

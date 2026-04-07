@@ -1,14 +1,14 @@
 :root {
-    --bg-color: #0b0710; /* Pure black-purple from the image */
-    --text-primary: #9d8cf0; /* Bright, vibrant violet from the crosses */
-    --text-muted: #5e5082; /* Muted, deep purple */
-    --accent-color: #9d8cf0; /* Keep numbers and title in the vibrant purple */
-    --user-input: #dccfff; 
-    --grid-line: #6c5fa7; /* Sharp, cool violet grid lines */
+    --bg-color: #000000; /* Pure solid black */
+    --text-primary: #9d8cf0; 
+    --text-muted: #5e5082; 
+    --accent-color: #9d8cf0; 
+    --user-input: #ffffff; 
+    --grid-line: #6c5fa7; 
     --cell-bg: transparent;
-    --cell-highlight: #1a1226; /* Axis highlight color */
-    --cell-selected: #2a1f4c; /* Selected cell background */
-    --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Times New Roman", Times, serif; /* Optional: A slightly more 'vintage' serif stack */
+    --cell-highlight: #1a1226; 
+    --cell-selected: #2a1f4c; 
+    --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Times New Roman", Times, serif; 
 }
 
 * {
@@ -19,26 +19,8 @@
 }
 
 body {
-    /* Set the deep black-purple background */
     background-color: var(--bg-color);
-    
-    /* Add the faint, scratch-like texture from the reference image */
-    background-image: 
-        linear-gradient(45deg, rgba(157, 140, 240, 0.05) 25%, transparent 25%),
-        linear-gradient(-45deg, rgba(157, 140, 240, 0.05) 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, rgba(157, 140, 240, 0.05) 75%),
-        linear-gradient(-45deg, transparent 75%, rgba(157, 140, 240, 0.05) 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-    
-    color: var(--text-primary);
-    display: flex;
-    justify-content: center;
-    height: 100vh;
-}
-
-body {
-    background-color: var(--bg-color);
+    /* The texture gradients have been removed from here */
     color: var(--text-primary);
     display: flex;
     justify-content: center;

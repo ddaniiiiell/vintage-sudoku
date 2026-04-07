@@ -1,12 +1,13 @@
 :root {
-    --bg-color: #0b0710;
+    --bg-color: #1c152a; /* Lighter purple background */
     --text-primary: #ffffff;
-    --text-muted: #5e5082;
-    --accent-color: #6c5fa7;
-    --grid-line: #3a2e5d;
+    --text-muted: #8b7ab3; /* Lighter muted text */
+    --accent-color: #9d8cf0; /* Brighter accent */
+    --user-input: #dccfff; /* Very light purple for inputs */
+    --grid-line: #4f3f7a; /* Lighter grid lines */
     --cell-bg: transparent;
-    --cell-selected: #2a1f4c;
-    --cell-highlight: #1d1433;
+    --cell-highlight: #2a203f; /* Axis highlight color */
+    --cell-selected: #493970; /* Brighter selected cell */
 }
 
 * {
@@ -32,7 +33,6 @@ body {
     padding: 20px;
 }
 
-/* Using CSS Grid here perfectly centers the title while keeping the buttons on the edges */
 header {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -40,8 +40,13 @@ header {
     margin-bottom: 20px;
 }
 
-#reset-btn {
+.left-controls {
     justify-self: start;
+    display: flex;
+    gap: 15px;
+}
+
+#reset-btn, #stats-btn {
     background: none;
     border: none;
     color: var(--accent-color);
@@ -80,7 +85,7 @@ h1 {
 #sudoku-board {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
-    grid-template-rows: repeat(9, 1fr); /* This keeps empty rows from shrinking */
+    grid-template-rows: repeat(9, 1fr);
     border: 2px solid var(--grid-line);
     aspect-ratio: 1 / 1;
     margin-bottom: 20px;
@@ -95,57 +100,30 @@ h1 {
     cursor: pointer;
     background-color: var(--cell-bg);
     color: var(--text-primary);
-    transition: background-color 0.2s;
+    transition: background-color 0.1s;
     user-select: none;
 }
 
-/* Thicker borders for the 3x3 subgrids */
-.cell:nth-child(3n) {
-    border-right: 2px solid var(--grid-line);
-}
-.cell:nth-child(9n) {
-    border-right: none; 
-}
+.cell:nth-child(3n) { border-right: 2px solid var(--grid-line); }
+.cell:nth-child(9n) { border-right: none; }
 .cell:nth-child(n+19):nth-child(-n+27),
-.cell:nth-child(n+46):nth-child(-n+54) {
-    border-bottom: 2px solid var(--grid-line);
+.cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--grid-line); }
+
+/* Row and Column Highlight */
+.cell.highlight-axis {
+    background-color: var(--cell-highlight);
 }
 
 .cell.selected {
-    background-color: var(--cell-selected);
+    background-color: var(--cell-selected) !important;
 }
 
 .cell.given {
     color: var(--accent-color);
 }
-:root {
-    /* ... keep your existing variables ... */
-    --user-input: #bda8f2; /* Light purple for player inputs */
-}
 
-/* ... existing CSS ... */
-
-.cell.given {
-    color: var(--accent-color);
-}
-
-/* New styling for correctly inputted numbers */
 .cell.user-input {
     color: var(--user-input);
-}
-
-/* The shake animation for incorrect answers */
-@keyframes rumble {
-    0% { transform: translateX(0); }
-    20% { transform: translateX(-4px) rotate(-1deg); }
-    40% { transform: translateX(4px) rotate(1deg); }
-    60% { transform: translateX(-4px) rotate(-1deg); }
-    80% { transform: translateX(4px) rotate(1deg); }
-    100% { transform: translateX(0); }
-}
-
-.rumble {
-    animation: rumble 0.3s ease-in-out;
 }
 
 /* Numpad Styling */
@@ -153,13 +131,13 @@ h1 {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
-    justify-items: center; /* Centers the numbers horizontally */
+    justify-items: center;
 }
 
 .num-btn {
     background: transparent;
     border: none;
-    color: var(--text-muted); /* Colored numbers */
+    color: var(--text-muted);
     font-size: 1.8rem;
     cursor: pointer;
     padding: 10px;
@@ -167,16 +145,15 @@ h1 {
 }
 
 .num-btn:active {
-    color: var(--text-primary); /* Brightens when clicked */
+    color: var(--text-primary);
 }
 
-/* Utility class to hide elements */
+/* Fullscreen Overlays (Victory & Stats) */
 .hidden {
     display: none !important;
 }
 
-/* Victory Screen Styling */
-#victory-screen {
+.fullscreen-overlay {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -184,28 +161,59 @@ h1 {
     border: 2px solid var(--grid-line);
     aspect-ratio: 1 / 1;
     margin-bottom: 20px;
-    background-color: var(--cell-highlight);
+    background-color: var(--bg-color);
 }
 
-#victory-screen h2 {
+.fullscreen-overlay h2 {
     color: var(--accent-color);
     margin-bottom: 20px;
-    font-size: 2rem;
+    font-size: 1.8rem;
     letter-spacing: 2px;
 }
 
-#new-game-btn {
-    background-color: var(--accent-color);
+.stat-list {
+    width: 70%;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--grid-line);
+    padding-bottom: 5px;
+}
+
+.overlay-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.primary-btn, .danger-btn {
     color: var(--bg-color);
     border: none;
-    padding: 12px 24px;
-    font-size: 1.2rem;
+    padding: 10px 20px;
+    font-size: 1rem;
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
-    transition: opacity 0.2s;
 }
 
-#new-game-btn:active {
-    opacity: 0.8;
-}   
+.primary-btn { background-color: var(--accent-color); }
+.danger-btn { background-color: #f28c8c; }
+
+/* Grid Rumble Animation */
+@keyframes rumble {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-6px) rotate(-0.5deg); }
+    40% { transform: translateX(6px) rotate(0.5deg); }
+    60% { transform: translateX(-6px) rotate(-0.5deg); }
+    80% { transform: translateX(6px) rotate(0.5deg); }
+    100% { transform: translateX(0); }
+}
+
+#sudoku-board.rumble {
+    animation: rumble 0.3s ease-in-out;
+}

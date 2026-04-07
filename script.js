@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. All DOM Elements
+    // DOM Elements
     const boardEl = document.getElementById('sudoku-board');
     const numpadEl = document.getElementById('numpad');
     const resetBtn = document.getElementById('reset-btn');
@@ -9,14 +9,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const mistakeDisplay = document.getElementById('mistake-display');
     const victoryScreen = document.getElementById('victory-screen');
     const newGameBtn = document.getElementById('new-game-btn');
+    
+    // Stats DOM Elements
+    const statsBtn = document.getElementById('stats-btn');
+    const statsScreen = document.getElementById('stats-screen');
+    const closeStatsBtn = document.getElementById('close-stats-btn');
+    const resetStatsBtn = document.getElementById('reset-stats-btn');
 
-    // 2. Game State Variables
+    // Game Variables
     let cells = [];
     let selectedCellIndex = null;
     let solvedBoard = [];
     let correctCount = 0;
     let mistakeCount = 0;
     let targetCorrectCount = 0;
+
+    // Stats Object
+    let stats = {
+        easy: 0,
+        medium: 0,
+        hard: 0,
+        extreme: 0
+    };
 
     const difficulties = {
         easy: 30,
@@ -25,13 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
         extreme: 60
     };
 
-    // 3. Initialization
     function init() {
+        loadStats();
         createBoard();
         createNumpad();
         startNewGame();
 
-        // Event Listeners
+        // Listeners
         resetBtn.addEventListener('click', startNewGame);
         difficultySelect.addEventListener('change', (e) => {
             diffDisplay.textContent = e.target.value.toUpperCase();
@@ -39,9 +53,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         newGameBtn.addEventListener('click', startNewGame);
         document.addEventListener('keydown', handleKeyPress);
+
+        // Stats Listeners
+        statsBtn.addEventListener('click', showStats);
+        closeStatsBtn.addEventListener('click', hideStats);
+        resetStatsBtn.addEventListener('click', resetStats);
     }
 
-    // 4. Board & UI Creation
     function createBoard() {
         boardEl.innerHTML = '';
         cells = [];
@@ -71,24 +89,45 @@ document.addEventListener('DOMContentLoaded', () => {
         numpadEl.appendChild(eraseBtn);
     }
 
-    // 5. Interaction Logic
+    function clearHighlights() {
+        cells.forEach(cell => {
+            cell.classList.remove('selected', 'highlight-axis');
+        });
+    }
+
     function selectCell(index) {
-        if (selectedCellIndex === index) {
-            cells[selectedCellIndex].classList.remove('selected');
+        // Prevent selecting given numbers or already correct inputs
+        if (cells[index].classList.contains('given') || cells[index].classList.contains('user-input')) {
+            clearHighlights();
             selectedCellIndex = null;
             return;
         }
 
-        if (selectedCellIndex !== null) {
-            cells[selectedCellIndex].classList.remove('selected');
+        if (selectedCellIndex === index) {
+            clearHighlights();
+            selectedCellIndex = null;
+            return;
         }
+
+        clearHighlights();
         selectedCellIndex = index;
         cells[selectedCellIndex].classList.add('selected');
+
+        // Apply Row and Column Highlights
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+
+        cells.forEach((cell, i) => {
+            const r = Math.floor(i / 9);
+            const c = i % 9;
+            if (r === row || c === col) {
+                cell.classList.add('highlight-axis');
+            }
+        });
     }
 
     function handleKeyPress(e) {
         if (selectedCellIndex === null) return;
-        
         if (e.key >= '1' && e.key <= '9') {
             enterNumber(e.key);
         } else if (e.key === 'Backspace' || e.key === 'Delete') {
@@ -100,44 +139,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedCellIndex !== null) {
             const cell = cells[selectedCellIndex];
             
-            if (!cell.classList.contains('given')) {
+            if (!cell.classList.contains('given') && !cell.classList.contains('user-input')) {
                 if (value === '') {
                     cell.textContent = '';
-                    cell.classList.remove('user-input');
                     return;
                 }
 
                 if (parseInt(value) === solvedBoard[selectedCellIndex]) {
-                    // Correct answer
+                    // Correct answer (Locks automatically because of selectCell logic)
                     cell.textContent = value;
                     cell.classList.add('user-input');
-                    
-                    cell.classList.remove('selected');
+                    clearHighlights();
                     selectedCellIndex = null;
 
-                    // Update correct counter
                     correctCount++;
                     correctDisplay.textContent = `${correctCount} CORRECT`;
 
-                    // Check for win condition
                     if (correctCount === targetCorrectCount) {
-                        setTimeout(() => {
-                            boardEl.classList.add('hidden');
-                            numpadEl.classList.add('hidden');
-                            victoryScreen.classList.remove('hidden');
-                        }, 500);
+                        handleWin();
                     }
 
                 } else {
                     // Incorrect answer
                     cell.textContent = ''; 
-                    cell.classList.remove('user-input');
                     
-                    cell.classList.remove('rumble'); 
-                    void cell.offsetWidth; 
-                    cell.classList.add('rumble');
+                    // Rumble the whole board
+                    boardEl.classList.remove('rumble'); 
+                    void boardEl.offsetWidth; // Trigger reflow
+                    boardEl.classList.add('rumble');
 
-                    // Update mistake counter
                     mistakeCount++;
                     mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
                 }
@@ -145,25 +175,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 6. Game Generation Logic
+    function handleWin() {
+        // Update stats
+        const currentDiff = difficultySelect.value;
+        stats[currentDiff]++;
+        saveStats();
+
+        setTimeout(() => {
+            boardEl.classList.add('hidden');
+            numpadEl.classList.add('hidden');
+            statsScreen.classList.add('hidden');
+            victoryScreen.classList.remove('hidden');
+        }, 500);
+    }
+
     function startNewGame() {
         const difficulty = difficultySelect.value;
         targetCorrectCount = difficulties[difficulty]; 
         
-        // Reset UI visibility
         boardEl.classList.remove('hidden');
         numpadEl.classList.remove('hidden');
         victoryScreen.classList.add('hidden');
+        statsScreen.classList.add('hidden');
 
-        // Reset counters
         correctCount = 0;
         mistakeCount = 0;
         correctDisplay.textContent = `${correctCount} CORRECT`;
         mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
 
+        clearHighlights();
         cells.forEach(cell => {
             cell.textContent = '';
-            cell.classList.remove('given', 'selected', 'user-input'); 
+            cell.classList.remove('given', 'user-input'); 
         });
         selectedCellIndex = null;
 
@@ -179,6 +222,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Stats Logic ---
+    function loadStats() {
+        const savedStats = localStorage.getItem('sudokuStats');
+        if (savedStats) {
+            stats = JSON.parse(savedStats);
+        }
+    }
+
+    function saveStats() {
+        localStorage.setItem('sudokuStats', JSON.stringify(stats));
+    }
+
+    function showStats() {
+        document.getElementById('stat-easy').textContent = stats.easy;
+        document.getElementById('stat-medium').textContent = stats.medium;
+        document.getElementById('stat-hard').textContent = stats.hard;
+        document.getElementById('stat-extreme').textContent = stats.extreme;
+
+        boardEl.classList.add('hidden');
+        victoryScreen.classList.add('hidden');
+        statsScreen.classList.remove('hidden');
+    }
+
+    function hideStats() {
+        statsScreen.classList.add('hidden');
+        // Only show board if victory screen isn't supposed to be active
+        if (correctCount !== targetCorrectCount) {
+            boardEl.classList.remove('hidden');
+        } else {
+            victoryScreen.classList.remove('hidden');
+        }
+    }
+
+    function resetStats() {
+        if(confirm("Are you sure you want to clear your stats?")) {
+            stats = { easy: 0, medium: 0, hard: 0, extreme: 0 };
+            saveStats();
+            showStats(); // Refresh display
+        }
+    }
+
+    // --- Generator Logic ---
     function generateBoard() {
         const board = new Array(81).fill(0);
         solve(board);

@@ -84,11 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => enterNumber(i.toString()));
             numpadEl.appendChild(btn);
         }
-        const eraseBtn = document.createElement('button');
-        eraseBtn.classList.add('num-btn');
-        eraseBtn.textContent = 'x';
-        eraseBtn.addEventListener('click', () => enterNumber(''));
-        numpadEl.appendChild(eraseBtn);
     }
 
     function clearHighlights() {

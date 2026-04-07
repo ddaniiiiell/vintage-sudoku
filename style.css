@@ -1,20 +1,40 @@
 :root {
-    --bg-color: #1c152a; /* Lighter purple background */
-    --text-primary: #ffffff;
-    --text-muted: #8b7ab3; /* Lighter muted text */
-    --accent-color: #9d8cf0; /* Brighter accent */
-    --user-input: #dccfff; /* Very light purple for inputs */
-    --grid-line: #4f3f7a; /* Lighter grid lines */
+    --bg-color: #0b0710; /* Pure black-purple from the image */
+    --text-primary: #9d8cf0; /* Bright, vibrant violet from the crosses */
+    --text-muted: #5e5082; /* Muted, deep purple */
+    --accent-color: #9d8cf0; /* Keep numbers and title in the vibrant purple */
+    --user-input: #dccfff; 
+    --grid-line: #6c5fa7; /* Sharp, cool violet grid lines */
     --cell-bg: transparent;
-    --cell-highlight: #2a203f; /* Axis highlight color */
-    --cell-selected: #493970; /* Brighter selected cell */
+    --cell-highlight: #1a1226; /* Axis highlight color */
+    --cell-selected: #2a1f4c; /* Selected cell background */
+    --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Times New Roman", Times, serif; /* Optional: A slightly more 'vintage' serif stack */
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-stack);
+}
+
+body {
+    /* Set the deep black-purple background */
+    background-color: var(--bg-color);
+    
+    /* Add the faint, scratch-like texture from the reference image */
+    background-image: 
+        linear-gradient(45deg, rgba(157, 140, 240, 0.05) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(157, 140, 240, 0.05) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(157, 140, 240, 0.05) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(157, 140, 240, 0.05) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    height: 100vh;
 }
 
 body {
@@ -49,7 +69,7 @@ header {
 #reset-btn, #stats-btn {
     background: none;
     border: none;
-    color: var(--accent-color);
+    color: var(--text-primary);
     font-size: 1.5rem;
     cursor: pointer;
 }
@@ -57,15 +77,15 @@ header {
 h1 {
     justify-self: center;
     font-size: 1.4rem;
-    letter-spacing: 1px;
-    color: var(--accent-color);
+    letter-spacing: 2px; /* Increased letter spacing for the gothic feel */
+    color: var(--text-primary); /* Changed from accent to text-primary */
 }
 
 #difficulty-select {
     justify-self: end;
     background: transparent;
-    color: var(--accent-color);
-    border: 1px solid var(--grid-line);
+    color: var(--text-primary); /* Changed from accent to text-primary */
+    border: 1px solid var(--text-muted); /* Changed from grid-line to text-muted */
     padding: 5px;
     border-radius: 5px;
     outline: none;
@@ -104,10 +124,9 @@ h1 {
     user-select: none;
 }
 
-.cell:nth-child(3n) { border-right: 2px solid var(--grid-line); }
-.cell:nth-child(9n) { border-right: none; }
+.cell:nth-child(3n) { border-right: 3px solid var(--grid-line); }
 .cell:nth-child(n+19):nth-child(-n+27),
-.cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--grid-line); }
+.cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 3px solid var(--grid-line); }
 
 /* Row and Column Highlight */
 .cell.highlight-axis {

@@ -29,7 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
         easy: 0,
         medium: 0,
         hard: 0,
-        extreme: 0
+        extreme: 0,
+        totalCorrect: 0,
+        totalMistakes: 0
     };
 
     const difficulties = {
@@ -146,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (parseInt(value) === solvedBoard[selectedCellIndex]) {
-                    // Correct answer (Locks automatically because of selectCell logic)
+                    // Correct answer
                     cell.textContent = value;
                     cell.classList.add('user-input');
                     clearHighlights();
@@ -154,6 +156,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     correctCount++;
                     correctDisplay.textContent = `${correctCount} CORRECT`;
+
+                    // Update and save lifetime stats
+                    stats.totalCorrect++;
+                    saveStats();
 
                     if (correctCount === targetCorrectCount) {
                         handleWin();
@@ -163,13 +169,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Incorrect answer
                     cell.textContent = ''; 
                     
-                    // Rumble the whole board
                     boardEl.classList.remove('rumble'); 
-                    void boardEl.offsetWidth; // Trigger reflow
+                    void boardEl.offsetWidth; 
                     boardEl.classList.add('rumble');
 
                     mistakeCount++;
                     mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
+
+                    // Update and save lifetime stats
+                    stats.totalMistakes++;
+                    saveStats();
                 }
             }
         }
@@ -226,7 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadStats() {
         const savedStats = localStorage.getItem('sudokuStats');
         if (savedStats) {
-            stats = JSON.parse(savedStats);
+            const parsed = JSON.parse(savedStats);
+            // This merges the old saved stats with the new default stats 
+            // so totalCorrect and totalMistakes don't break if they are missing
+            stats = { ...stats, ...parsed };
         }
     }
 
@@ -239,6 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('stat-medium').textContent = stats.medium;
         document.getElementById('stat-hard').textContent = stats.hard;
         document.getElementById('stat-extreme').textContent = stats.extreme;
+        document.getElementById('stat-correct').textContent = stats.totalCorrect;
+        document.getElementById('stat-mistakes').textContent = stats.totalMistakes;
 
         boardEl.classList.add('hidden');
         victoryScreen.classList.add('hidden');
@@ -247,7 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideStats() {
         statsScreen.classList.add('hidden');
-        // Only show board if victory screen isn't supposed to be active
         if (correctCount !== targetCorrectCount) {
             boardEl.classList.remove('hidden');
         } else {
@@ -257,9 +270,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetStats() {
         if(confirm("Are you sure you want to clear your stats?")) {
-            stats = { easy: 0, medium: 0, hard: 0, extreme: 0 };
+            stats = { easy: 0, medium: 0, hard: 0, extreme: 0, totalCorrect: 0, totalMistakes: 0 };
             saveStats();
-            showStats(); // Refresh display
+            showStats(); 
         }
     }
 

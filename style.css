@@ -247,3 +247,48 @@ h1 {
 }
 
 #sudoku-board.rumble { animation: rumble 0.3s ease-in-out; }
+
+/* Bottom Controls & Info Screen */
+.bottom-controls {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 15px;
+}
+
+#info-btn {
+    font-family: monospace; /* Gives the "i" a cleaner, structured look */
+    font-weight: bold;
+}
+
+#stencil-btn, #eraser-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: color 0.2s, text-shadow 0.2s;
+}
+
+#stencil-btn.active-mode {
+    color: var(--user-input);
+    text-shadow: 0 0 8px var(--accent-color);
+}
+
+#eraser-btn:active {
+    color: var(--user-input);
+}
+
+.info-list {
+    width: 85%;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
+.info-list p {
+    border-bottom: 1px solid var(--cell-highlight);
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}

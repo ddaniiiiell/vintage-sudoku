@@ -18,8 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeStatsBtn = document.getElementById('close-stats-btn');
     const resetStatsBtn = document.getElementById('reset-stats-btn');
 
+    const infoBtn = document.getElementById('info-btn');
+    const infoScreen = document.getElementById('info-screen');
+    const closeInfoBtn = document.getElementById('close-info-btn');
+
     const assistantBtn = document.getElementById('assistant-btn');
     const stencilBtn = document.getElementById('stencil-btn');
+    const eraserBtn = document.getElementById('eraser-btn');
 
     let cells = [];
     let selectedCellIndex = null;
@@ -53,6 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
         closeStatsBtn.addEventListener('click', hideStats);
         resetStatsBtn.addEventListener('click', resetStats);
 
+        infoBtn.addEventListener('click', showInfo);
+        closeInfoBtn.addEventListener('click', hideInfo);
+
         assistantBtn.addEventListener('click', () => {
             isAssistantActive = !isAssistantActive;
             assistantBtn.classList.toggle('active-mode', isAssistantActive);
@@ -63,6 +71,18 @@ document.addEventListener('DOMContentLoaded', () => {
         stencilBtn.addEventListener('click', () => {
             isStencilActive = !isStencilActive;
             stencilBtn.classList.toggle('active-mode', isStencilActive);
+        });
+
+        // Global Eraser
+        eraserBtn.addEventListener('click', () => {
+            cells.forEach(cell => {
+                if (!cell.classList.contains('given') && !cell.classList.contains('user-input')) {
+                    const container = cell.querySelector('.stencil-container');
+                    if (container) {
+                        container.querySelectorAll('.stencil-num').forEach(num => num.textContent = '');
+                    }
+                }
+            });
         });
     }
 
@@ -91,23 +111,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearHighlights() {
-        cells.forEach(cell => {
-            cell.classList.remove('selected', 'highlight-axis', 'highlight-match');
-        });
+        cells.forEach(cell => cell.classList.remove('selected', 'highlight-axis', 'highlight-match'));
     }
 
     function selectCell(index) {
         const cell = cells[index];
         const isFilled = cell.classList.contains('given') || cell.classList.contains('user-input');
 
-        // Block selection of locked cells unless assistant is on
         if (isFilled && !isAssistantActive) {
             clearHighlights();
             selectedCellIndex = null;
             return;
         }
 
-        // The Fix: Allow unselecting if clicking the same box, regardless of assistant mode
         if (selectedCellIndex === index) {
             clearHighlights();
             selectedCellIndex = null;
@@ -127,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (r === row || cIdx === col) c.classList.add('highlight-axis');
         });
 
-        // Assistant Match Highlights
         if (isAssistantActive && isFilled) {
             const valSpan = cell.querySelector('.value');
             if (valSpan) {
@@ -152,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (cell.classList.contains('given') || cell.classList.contains('user-input')) return;
 
-        // --- Stencil Logic ---
+        // Stencil Logic
         if (isStencilActive && value !== '') {
             let container = cell.querySelector('.stencil-container');
             if (!container) {
@@ -172,20 +187,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return; 
         }
 
-        // --- Standard Logic ---
+        // Deleting
         if (value === '') {
             cell.innerHTML = '';
             return;
         }
 
+        // Checking Correctness
         if (parseInt(value) === solvedBoard[selectedCellIndex]) {
             cell.innerHTML = `<span class="value">${value}</span>`;
             cell.classList.add('user-input');
             clearHighlights();
             
-            // Retain selection if Assistant is active to trigger new highlights
             if (!isAssistantActive) selectedCellIndex = null;
             else selectCell(selectedCellIndex);
+
+            // Auto-erase matching stencils from axis and box
+            autoEraseStencils(selectedCellIndex, value);
 
             correctCount++;
             correctDisplay.textContent = `${correctCount} CORRECT`;
@@ -193,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
             saveStats();
 
             checkCompletion(selectedCellIndex);
-
             if (correctCount === targetCorrectCount) handleWin();
 
         } else {
@@ -207,8 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
             stats.totalMistakes++;
             saveStats();
 
-            // Extreme Penalty
-            if (difficultySelect.value === 'extreme' && mistakeCount >= 5) {
+            // Extreme Penalty logic changed to 6
+            if (difficultySelect.value === 'extreme' && mistakeCount >= 6) {
                 setTimeout(() => {
                     boardEl.classList.add('hidden');
                     numpadEl.classList.add('hidden');
@@ -218,7 +235,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Wave Animation Logic ---
+    function autoEraseStencils(index, val) {
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+        const startRow = Math.floor(row / 3) * 3;
+        const startCol = Math.floor(col / 3) * 3;
+
+        for (let i = 0; i < 9; i++) {
+            clearStencilVal(row * 9 + i, val);
+            clearStencilVal(i * 9 + col, val);
+            const boxRow = startRow + Math.floor(i / 3);
+            const boxCol = startCol + (i % 3);
+            clearStencilVal(boxRow * 9 + boxCol, val);
+        }
+    }
+
+    function clearStencilVal(cellIndex, val) {
+        const cell = cells[cellIndex];
+        if (!cell.classList.contains('given') && !cell.classList.contains('user-input')) {
+            const container = cell.querySelector('.stencil-container');
+            if (container) {
+                const targetNum = container.querySelector(`[data-val="${val}"]`);
+                if (targetNum) targetNum.textContent = '';
+            }
+        }
+    }
+
     function checkCompletion(index) {
         const row = Math.floor(index / 9);
         const col = index % 9;
@@ -268,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             boardEl.classList.add('hidden');
             numpadEl.classList.add('hidden');
             statsScreen.classList.add('hidden');
+            infoScreen.classList.add('hidden');
             victoryScreen.classList.remove('hidden');
         }, 800);
     }
@@ -276,17 +319,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const difficulty = difficultySelect.value;
         targetCorrectCount = difficulties[difficulty]; 
         
-        boardEl.classList.remove('hidden', 'rumble'); // Clears rumble on new game
+        boardEl.classList.remove('hidden', 'rumble'); 
         numpadEl.classList.remove('hidden');
         victoryScreen.classList.add('hidden');
         gameOverScreen.classList.add('hidden');
         statsScreen.classList.add('hidden');
+        infoScreen.classList.add('hidden');
 
-        if (difficulty === 'extreme') {
-            extremeWarning.classList.remove('hidden');
-        } else {
-            extremeWarning.classList.add('hidden');
-        }
+        if (difficulty === 'extreme') extremeWarning.classList.remove('hidden');
+        else extremeWarning.classList.add('hidden');
 
         correctCount = 0;
         mistakeCount = 0;
@@ -312,11 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Stats & Info Logic ---
     function loadStats() {
         const savedStats = localStorage.getItem('sudokuStats');
         if (savedStats) stats = { ...stats, ...JSON.parse(savedStats) };
     }
     function saveStats() { localStorage.setItem('sudokuStats', JSON.stringify(stats)); }
+    
     function showStats() {
         document.getElementById('stat-easy').textContent = stats.easy;
         document.getElementById('stat-medium').textContent = stats.medium;
@@ -327,22 +370,16 @@ document.addEventListener('DOMContentLoaded', () => {
         boardEl.classList.add('hidden');
         victoryScreen.classList.add('hidden');
         gameOverScreen.classList.add('hidden');
+        infoScreen.classList.add('hidden');
         statsScreen.classList.remove('hidden');
     }
 
     function hideStats() {
         statsScreen.classList.add('hidden');
-        
-        // Remove the rumble class so it doesn't replay when unhidden
         boardEl.classList.remove('rumble');
-
-        if (mistakeCount >= 5 && difficultySelect.value === 'extreme') {
-            gameOverScreen.classList.remove('hidden');
-        } else if (correctCount !== targetCorrectCount) {
-            boardEl.classList.remove('hidden');
-        } else {
-            victoryScreen.classList.remove('hidden');
-        }
+        if (mistakeCount >= 6 && difficultySelect.value === 'extreme') gameOverScreen.classList.remove('hidden');
+        else if (correctCount !== targetCorrectCount) boardEl.classList.remove('hidden');
+        else victoryScreen.classList.remove('hidden');
     }
 
     function resetStats() {
@@ -353,6 +390,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function showInfo() {
+        boardEl.classList.add('hidden');
+        victoryScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+        statsScreen.classList.add('hidden');
+        infoScreen.classList.remove('hidden');
+    }
+
+    function hideInfo() {
+        infoScreen.classList.add('hidden');
+        boardEl.classList.remove('rumble');
+        if (mistakeCount >= 6 && difficultySelect.value === 'extreme') gameOverScreen.classList.remove('hidden');
+        else if (correctCount !== targetCorrectCount) boardEl.classList.remove('hidden');
+        else victoryScreen.classList.remove('hidden');
+    }
+
+    // --- Generator Logic ---
     function generateBoard() {
         const board = new Array(81).fill(0);
         solve(board);

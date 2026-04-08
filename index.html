@@ -11,9 +11,9 @@
         <header>
             <div class="left-controls">
                 <button id="reset-btn" aria-label="Reset Puzzle">↺</button>
-                <button id="stats-btn" aria-label="View Stats">%</button>
-                <button id="assistant-btn" aria-label="Assistant Mode">⌕</button>
-                <button id="stencil-btn" aria-label="Stencil Mode">✎</button>
+                <button id="info-btn" aria-label="Information">i</button>
+                <button id="stats-btn" aria-label="View Stats">ılı</button>
+                <button id="assistant-btn" aria-label="Assistant Mode">A</button>
             </div>
             <h1>Sudoku</h1>
             <select id="difficulty-select">
@@ -29,7 +29,7 @@
             <span id="diff-display">EXTREME</span>
             <span class="right-status">
                 <span id="mistake-display">0 MISTAKES</span>
-                <span id="extreme-warning" class="hidden">(MAX 5)</span>
+                <span id="extreme-warning" class="hidden">(UP TO 5)</span>
             </span>
         </div>
 
@@ -62,7 +62,27 @@
             </div>
         </div>
 
+        <div id="info-screen" class="hidden fullscreen-overlay">
+            <h2>How to Play</h2>
+            <div class="info-list">
+                <p><strong>↺</strong> : Reset puzzle</p>
+                <p><strong>i</strong> : Information</p>
+                <p><strong>ılı</strong> : View statistics</p>
+                <p><strong>A</strong> : Assistant (highlights matches)</p>
+                <p><strong>✎</strong> : Stencil (pencil in notes)</p>
+                <p><strong>⎚</strong> : Erase all notes from board</p>
+                <br>
+                <p class="danger-text" style="font-size: 0.9rem; text-align: center;"><strong>Extreme Mode:</strong> Allowed up to 5 mistakes. The 6th mistake ends the game.</p>
+            </div>
+            <button id="close-info-btn" class="primary-btn">Close</button>
+        </div>
+
         <div id="numpad"></div>
+
+        <div class="bottom-controls">
+            <button id="stencil-btn" aria-label="Stencil Mode">✎</button>
+            <button id="eraser-btn" aria-label="Erase All Stencils">⎚</button>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>

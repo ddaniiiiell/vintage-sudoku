@@ -276,14 +276,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const difficulty = difficultySelect.value;
         targetCorrectCount = difficulties[difficulty]; 
         
-        boardEl.classList.remove('hidden');
+        boardEl.classList.remove('hidden', 'rumble'); // Clears rumble on new game
         numpadEl.classList.remove('hidden');
         victoryScreen.classList.add('hidden');
         gameOverScreen.classList.add('hidden');
         statsScreen.classList.add('hidden');
 
-        if (difficulty === 'extreme') extremeWarning.classList.remove('hidden');
-        else extremeWarning.classList.add('hidden');
+        if (difficulty === 'extreme') {
+            extremeWarning.classList.remove('hidden');
+        } else {
+            extremeWarning.classList.add('hidden');
+        }
 
         correctCount = 0;
         mistakeCount = 0;
@@ -326,12 +329,22 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOverScreen.classList.add('hidden');
         statsScreen.classList.remove('hidden');
     }
+
     function hideStats() {
         statsScreen.classList.add('hidden');
-        if (mistakeCount >= 5 && difficultySelect.value === 'extreme') gameOverScreen.classList.remove('hidden');
-        else if (correctCount !== targetCorrectCount) boardEl.classList.remove('hidden');
-        else victoryScreen.classList.remove('hidden');
+        
+        // Remove the rumble class so it doesn't replay when unhidden
+        boardEl.classList.remove('rumble');
+
+        if (mistakeCount >= 5 && difficultySelect.value === 'extreme') {
+            gameOverScreen.classList.remove('hidden');
+        } else if (correctCount !== targetCorrectCount) {
+            boardEl.classList.remove('hidden');
+        } else {
+            victoryScreen.classList.remove('hidden');
+        }
     }
+
     function resetStats() {
         if(confirm("Are you sure you want to clear your stats?")) {
             stats = { easy: 0, medium: 0, hard: 0, extreme: 0, totalCorrect: 0, totalMistakes: 0 };

@@ -48,13 +48,21 @@ header {
     gap: 15px;
 }
 
-#reset-btn, #stats-btn, #assistant-btn, #stencil-btn {
+/* Added #info-btn to remove the default white box background */
+#reset-btn, #stats-btn, #assistant-btn, #stencil-btn, #info-btn {
     background: none;
     border: none;
     color: var(--text-primary);
     font-size: 1.2rem;
     cursor: pointer;
     transition: color 0.2s, text-shadow 0.2s;
+}
+
+/* Make the info star slightly bigger */
+#info-btn {
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
 }
 
 /* Active state for toggles */

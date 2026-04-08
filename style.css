@@ -1,5 +1,5 @@
 :root {
-    --bg-color: #000000; /* Pure solid black */
+    --bg-color: #000000; 
     --text-primary: #9d8cf0; 
     --text-muted: #5e5082; 
     --accent-color: #9d8cf0; 
@@ -7,7 +7,8 @@
     --grid-line: #6c5fa7; 
     --cell-bg: transparent;
     --cell-highlight: #1a1226; 
-    --cell-selected: #2a1f4c; 
+    --cell-selected: #5a458f; /* Increased contrast */
+    --cell-match: #3b2b5e; /* Assistant highlight color */
     --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Times New Roman", Times, serif; 
 }
 
@@ -20,7 +21,6 @@
 
 body {
     background-color: var(--bg-color);
-    /* The texture gradients have been removed from here */
     color: var(--text-primary);
     display: flex;
     justify-content: center;
@@ -48,26 +48,33 @@ header {
     gap: 15px;
 }
 
-#reset-btn, #stats-btn {
+#reset-btn, #stats-btn, #assistant-btn, #stencil-btn {
     background: none;
     border: none;
     color: var(--text-primary);
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     cursor: pointer;
+    transition: color 0.2s, text-shadow 0.2s;
+}
+
+/* Active state for toggles */
+.active-mode {
+    color: #ffffff !important;
+    text-shadow: 0 0 8px var(--accent-color);
 }
 
 h1 {
     justify-self: center;
     font-size: 1.4rem;
-    letter-spacing: 2px; /* Increased letter spacing for the gothic feel */
-    color: var(--text-primary); /* Changed from accent to text-primary */
+    letter-spacing: 2px;
+    color: var(--text-primary);
 }
 
 #difficulty-select {
     justify-self: end;
     background: transparent;
-    color: var(--text-primary); /* Changed from accent to text-primary */
-    border: 1px solid var(--text-muted); /* Changed from grid-line to text-muted */
+    color: var(--text-primary);
+    border: 1px solid var(--text-muted);
     padding: 5px;
     border-radius: 5px;
     outline: none;
@@ -84,11 +91,16 @@ h1 {
     letter-spacing: 1px;
 }
 
+#extreme-warning {
+    color: #f28c8c;
+    margin-left: 5px;
+}
+
 #sudoku-board {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     grid-template-rows: repeat(9, 1fr);
-    border: 2px solid var(--grid-line);
+    border: 3px solid var(--grid-line);
     aspect-ratio: 1 / 1;
     margin-bottom: 20px;
 }
@@ -104,27 +116,51 @@ h1 {
     color: var(--text-primary);
     transition: background-color 0.1s;
     user-select: none;
+    position: relative;
 }
 
 .cell:nth-child(3n) { border-right: 3px solid var(--grid-line); }
+.cell:nth-child(9n) { border-right: none; }
 .cell:nth-child(n+19):nth-child(-n+27),
 .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 3px solid var(--grid-line); }
 
-/* Row and Column Highlight */
-.cell.highlight-axis {
-    background-color: var(--cell-highlight);
+.cell.highlight-axis { background-color: var(--cell-highlight); }
+.cell.highlight-match { background-color: var(--cell-match); }
+.cell.selected { background-color: var(--cell-selected) !important; }
+.cell.given { color: var(--accent-color); }
+.cell.user-input { color: var(--user-input); }
+
+/* Stencil Styling */
+.stencil-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    width: 100%;
+    height: 100%;
+    padding: 2px;
 }
 
-.cell.selected {
-    background-color: var(--cell-selected) !important;
+.stencil-num {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
 }
 
-.cell.given {
-    color: var(--accent-color);
+/* Value Wrapper for the Wave Animation */
+.value {
+    display: inline-block;
 }
 
-.cell.user-input {
-    color: var(--user-input);
+@keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.wave {
+    animation: wave 0.4s ease-in-out;
 }
 
 /* Numpad Styling */
@@ -139,21 +175,17 @@ h1 {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-size: 1.6rem; /* Slightly smaller to fit all 9 neatly on mobile */
+    font-size: 1.6rem;
     cursor: pointer;
     padding: 10px 0;
     transition: color 0.2s;
     width: 100%;
 }
 
-.num-btn:active {
-    color: var(--text-primary);
-}
+.num-btn:active { color: var(--text-primary); }
 
-/* Fullscreen Overlays (Victory & Stats) */
-.hidden {
-    display: none !important;
-}
+/* Overlays */
+.hidden { display: none !important; }
 
 .fullscreen-overlay {
     display: flex;
@@ -173,6 +205,8 @@ h1 {
     letter-spacing: 2px;
 }
 
+.danger-text { color: #f28c8c !important; }
+
 .stat-list {
     width: 70%;
     margin-bottom: 20px;
@@ -188,10 +222,7 @@ h1 {
     padding-bottom: 5px;
 }
 
-.overlay-buttons {
-    display: flex;
-    gap: 10px;
-}
+.overlay-buttons { display: flex; gap: 10px; }
 
 .primary-btn, .danger-btn {
     color: var(--bg-color);
@@ -206,7 +237,6 @@ h1 {
 .primary-btn { background-color: var(--accent-color); }
 .danger-btn { background-color: #f28c8c; }
 
-/* Grid Rumble Animation */
 @keyframes rumble {
     0% { transform: translateX(0); }
     20% { transform: translateX(-6px) rotate(-0.5deg); }
@@ -216,6 +246,4 @@ h1 {
     100% { transform: translateX(0); }
 }
 
-#sudoku-board.rumble {
-    animation: rumble 0.3s ease-in-out;
-}
+#sudoku-board.rumble { animation: rumble 0.3s ease-in-out; }

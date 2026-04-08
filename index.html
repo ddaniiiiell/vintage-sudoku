@@ -12,6 +12,8 @@
             <div class="left-controls">
                 <button id="reset-btn" aria-label="Reset Puzzle">↺</button>
                 <button id="stats-btn" aria-label="View Stats">T</button>
+                <button id="assistant-btn" aria-label="Assistant Mode">🔍</button>
+                <button id="stencil-btn" aria-label="Stencil Mode">✎</button>
             </div>
             <h1>Sudoku</h1>
             <select id="difficulty-select">
@@ -25,7 +27,7 @@
         <div class="status-bar">
             <span id="correct-display">0 CORRECT</span>
             <span id="diff-display">EXTREME</span>
-            <span id="mistake-display">0 MISTAKES</span>
+            <span id="mistake-display">0 MISTAKES <span id="extreme-warning">(MAX 5)</span></span>
         </div>
 
         <div id="sudoku-board"></div>
@@ -33,6 +35,12 @@
         <div id="victory-screen" class="hidden fullscreen-overlay">
             <h2>Puzzle Solved!</h2>
             <button id="new-game-btn" class="primary-btn">New Game</button>
+        </div>
+
+        <div id="game-over-screen" class="hidden fullscreen-overlay">
+            <h2 class="danger-text">Game Over</h2>
+            <p>Too many mistakes.</p>
+            <button id="try-again-btn" class="primary-btn">Try Again</button>
         </div>
 
         <div id="stats-screen" class="hidden fullscreen-overlay">
@@ -51,8 +59,7 @@
             </div>
         </div>
 
-        <div id="numpad">
-            </div>
+        <div id="numpad"></div>
     </div>
     <script src="script.js"></script>
 </body>

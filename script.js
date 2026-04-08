@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
     const boardEl = document.getElementById('sudoku-board');
     const numpadEl = document.getElementById('numpad');
     const resetBtn = document.getElementById('reset-btn');
@@ -7,39 +6,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const diffDisplay = document.getElementById('diff-display');
     const correctDisplay = document.getElementById('correct-display');
     const mistakeDisplay = document.getElementById('mistake-display');
-    const victoryScreen = document.getElementById('victory-screen');
-    const newGameBtn = document.getElementById('new-game-btn');
+    const extremeWarning = document.getElementById('extreme-warning');
     
-    // Stats DOM Elements
+    const victoryScreen = document.getElementById('victory-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const newGameBtn = document.getElementById('new-game-btn');
+    const tryAgainBtn = document.getElementById('try-again-btn');
+    
     const statsBtn = document.getElementById('stats-btn');
     const statsScreen = document.getElementById('stats-screen');
     const closeStatsBtn = document.getElementById('close-stats-btn');
     const resetStatsBtn = document.getElementById('reset-stats-btn');
 
-    // Game Variables
+    const assistantBtn = document.getElementById('assistant-btn');
+    const stencilBtn = document.getElementById('stencil-btn');
+
     let cells = [];
     let selectedCellIndex = null;
     let solvedBoard = [];
     let correctCount = 0;
     let mistakeCount = 0;
     let targetCorrectCount = 0;
+    
+    let isAssistantActive = false;
+    let isStencilActive = false;
 
-    // Stats Object
-    let stats = {
-        easy: 0,
-        medium: 0,
-        hard: 0,
-        extreme: 0,
-        totalCorrect: 0,
-        totalMistakes: 0
-    };
-
-    const difficulties = {
-        easy: 30,
-        medium: 40,
-        hard: 50,
-        extreme: 60
-    };
+    let stats = { easy: 0, medium: 0, hard: 0, extreme: 0, totalCorrect: 0, totalMistakes: 0 };
+    const difficulties = { easy: 30, medium: 40, hard: 50, extreme: 60 };
 
     function init() {
         loadStats();
@@ -47,19 +40,30 @@ document.addEventListener('DOMContentLoaded', () => {
         createNumpad();
         startNewGame();
 
-        // Listeners
         resetBtn.addEventListener('click', startNewGame);
         difficultySelect.addEventListener('change', (e) => {
             diffDisplay.textContent = e.target.value.toUpperCase();
             startNewGame();
         });
         newGameBtn.addEventListener('click', startNewGame);
+        tryAgainBtn.addEventListener('click', startNewGame);
         document.addEventListener('keydown', handleKeyPress);
 
-        // Stats Listeners
         statsBtn.addEventListener('click', showStats);
         closeStatsBtn.addEventListener('click', hideStats);
         resetStatsBtn.addEventListener('click', resetStats);
+
+        assistantBtn.addEventListener('click', () => {
+            isAssistantActive = !isAssistantActive;
+            assistantBtn.classList.toggle('active-mode', isAssistantActive);
+            clearHighlights();
+            if (selectedCellIndex !== null) selectCell(selectedCellIndex);
+        });
+
+        stencilBtn.addEventListener('click', () => {
+            isStencilActive = !isStencilActive;
+            stencilBtn.classList.toggle('active-mode', isStencilActive);
+        });
     }
 
     function createBoard() {
@@ -88,19 +92,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function clearHighlights() {
         cells.forEach(cell => {
-            cell.classList.remove('selected', 'highlight-axis');
+            cell.classList.remove('selected', 'highlight-axis', 'highlight-match');
         });
     }
 
     function selectCell(index) {
-        // Prevent selecting given numbers or already correct inputs
-        if (cells[index].classList.contains('given') || cells[index].classList.contains('user-input')) {
+        const cell = cells[index];
+        const isFilled = cell.classList.contains('given') || cell.classList.contains('user-input');
+
+        // Block selection of locked cells unless assistant is on
+        if (isFilled && !isAssistantActive) {
             clearHighlights();
             selectedCellIndex = null;
             return;
         }
 
-        if (selectedCellIndex === index) {
+        if (selectedCellIndex === index && !isAssistantActive) {
             clearHighlights();
             selectedCellIndex = null;
             return;
@@ -108,89 +115,160 @@ document.addEventListener('DOMContentLoaded', () => {
 
         clearHighlights();
         selectedCellIndex = index;
-        cells[selectedCellIndex].classList.add('selected');
+        cell.classList.add('selected');
 
-        // Apply Row and Column Highlights
         const row = Math.floor(index / 9);
         const col = index % 9;
 
-        cells.forEach((cell, i) => {
+        cells.forEach((c, i) => {
             const r = Math.floor(i / 9);
-            const c = i % 9;
-            if (r === row || c === col) {
-                cell.classList.add('highlight-axis');
-            }
+            const cIdx = i % 9;
+            if (r === row || cIdx === col) c.classList.add('highlight-axis');
         });
+
+        // Assistant Match Highlights
+        if (isAssistantActive && isFilled) {
+            const valSpan = cell.querySelector('.value');
+            if (valSpan) {
+                const val = valSpan.textContent;
+                cells.forEach(c => {
+                    const span = c.querySelector('.value');
+                    if (span && span.textContent === val) c.classList.add('highlight-match');
+                });
+            }
+        }
     }
 
     function handleKeyPress(e) {
         if (selectedCellIndex === null) return;
-        if (e.key >= '1' && e.key <= '9') {
-            enterNumber(e.key);
-        } else if (e.key === 'Backspace' || e.key === 'Delete') {
-            enterNumber('');
-        }
+        if (e.key >= '1' && e.key <= '9') enterNumber(e.key);
+        else if (e.key === 'Backspace' || e.key === 'Delete') enterNumber('');
     }
 
     function enterNumber(value) {
-        if (selectedCellIndex !== null) {
-            const cell = cells[selectedCellIndex];
+        if (selectedCellIndex === null) return;
+        const cell = cells[selectedCellIndex];
+        
+        if (cell.classList.contains('given') || cell.classList.contains('user-input')) return;
+
+        // --- Stencil Logic ---
+        if (isStencilActive && value !== '') {
+            let container = cell.querySelector('.stencil-container');
+            if (!container) {
+                cell.innerHTML = '<div class="stencil-container"></div>';
+                container = cell.querySelector('.stencil-container');
+                for(let i=1; i<=9; i++) {
+                    const s = document.createElement('div');
+                    s.className = 'stencil-num';
+                    s.dataset.val = i;
+                    container.appendChild(s);
+                }
+            }
+            const targetNum = container.querySelector(`[data-val="${value}"]`);
+            if (targetNum) {
+                targetNum.textContent = targetNum.textContent === value ? '' : value;
+            }
+            return; 
+        }
+
+        // --- Standard Logic ---
+        if (value === '') {
+            cell.innerHTML = '';
+            return;
+        }
+
+        if (parseInt(value) === solvedBoard[selectedCellIndex]) {
+            cell.innerHTML = `<span class="value">${value}</span>`;
+            cell.classList.add('user-input');
+            clearHighlights();
             
-            if (!cell.classList.contains('given') && !cell.classList.contains('user-input')) {
-                if (value === '') {
-                    cell.textContent = '';
-                    return;
-                }
+            // Retain selection if Assistant is active to trigger new highlights
+            if (!isAssistantActive) selectedCellIndex = null;
+            else selectCell(selectedCellIndex);
 
-                if (parseInt(value) === solvedBoard[selectedCellIndex]) {
-                    // Correct answer
-                    cell.textContent = value;
-                    cell.classList.add('user-input');
-                    clearHighlights();
-                    selectedCellIndex = null;
+            correctCount++;
+            correctDisplay.textContent = `${correctCount} CORRECT`;
+            stats.totalCorrect++;
+            saveStats();
 
-                    correctCount++;
-                    correctDisplay.textContent = `${correctCount} CORRECT`;
+            checkCompletion(selectedCellIndex);
 
-                    // Update and save lifetime stats
-                    stats.totalCorrect++;
-                    saveStats();
+            if (correctCount === targetCorrectCount) handleWin();
 
-                    if (correctCount === targetCorrectCount) {
-                        handleWin();
-                    }
+        } else {
+            cell.innerHTML = ''; 
+            boardEl.classList.remove('rumble'); 
+            void boardEl.offsetWidth; 
+            boardEl.classList.add('rumble');
 
-                } else {
-                    // Incorrect answer
-                    cell.textContent = ''; 
-                    
-                    boardEl.classList.remove('rumble'); 
-                    void boardEl.offsetWidth; 
-                    boardEl.classList.add('rumble');
+            mistakeCount++;
+            mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
+            stats.totalMistakes++;
+            saveStats();
 
-                    mistakeCount++;
-                    mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
-
-                    // Update and save lifetime stats
-                    stats.totalMistakes++;
-                    saveStats();
-                }
+            // Extreme Penalty
+            if (difficultySelect.value === 'extreme' && mistakeCount >= 5) {
+                setTimeout(() => {
+                    boardEl.classList.add('hidden');
+                    numpadEl.classList.add('hidden');
+                    gameOverScreen.classList.remove('hidden');
+                }, 400);
             }
         }
     }
 
+    // --- Wave Animation Logic ---
+    function checkCompletion(index) {
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+        const boxStartRow = Math.floor(row / 3) * 3;
+        const boxStartCol = Math.floor(col / 3) * 3;
+
+        let rComplete = true, cComplete = true, bComplete = true;
+        const rCells = [], cCells = [], bCells = [];
+
+        for (let i = 0; i < 9; i++) {
+            const rIdx = row * 9 + i;
+            rCells.push(cells[rIdx]);
+            if (!cells[rIdx].classList.contains('given') && !cells[rIdx].classList.contains('user-input')) rComplete = false;
+
+            const cIdx = i * 9 + col;
+            cCells.push(cells[cIdx]);
+            if (!cells[cIdx].classList.contains('given') && !cells[cIdx].classList.contains('user-input')) cComplete = false;
+
+            const bIdx = (boxStartRow + Math.floor(i / 3)) * 9 + (boxStartCol + (i % 3));
+            bCells.push(cells[bIdx]);
+            if (!cells[bIdx].classList.contains('given') && !cells[bIdx].classList.contains('user-input')) bComplete = false;
+        }
+
+        if (rComplete) triggerWave(rCells);
+        if (cComplete) triggerWave(cCells);
+        if (bComplete) triggerWave(bCells);
+    }
+
+    function triggerWave(cellArray) {
+        cellArray.forEach((cell, i) => {
+            setTimeout(() => {
+                const span = cell.querySelector('.value');
+                if (span) {
+                    span.classList.remove('wave');
+                    void span.offsetWidth;
+                    span.classList.add('wave');
+                }
+            }, i * 40); 
+        });
+    }
+
     function handleWin() {
-        // Update stats
         const currentDiff = difficultySelect.value;
         stats[currentDiff]++;
         saveStats();
-
         setTimeout(() => {
             boardEl.classList.add('hidden');
             numpadEl.classList.add('hidden');
             statsScreen.classList.add('hidden');
             victoryScreen.classList.remove('hidden');
-        }, 500);
+        }, 800);
     }
 
     function startNewGame() {
@@ -200,7 +278,11 @@ document.addEventListener('DOMContentLoaded', () => {
         boardEl.classList.remove('hidden');
         numpadEl.classList.remove('hidden');
         victoryScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
         statsScreen.classList.add('hidden');
+
+        if (difficulty === 'extreme') extremeWarning.classList.remove('hidden');
+        else extremeWarning.classList.add('hidden');
 
         correctCount = 0;
         mistakeCount = 0;
@@ -209,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         clearHighlights();
         cells.forEach(cell => {
-            cell.textContent = '';
+            cell.innerHTML = '';
             cell.classList.remove('given', 'user-input'); 
         });
         selectedCellIndex = null;
@@ -220,27 +302,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let i = 0; i < 81; i++) {
             if (board[i] !== 0) {
-                cells[i].textContent = board[i];
+                cells[i].innerHTML = `<span class="value">${board[i]}</span>`;
                 cells[i].classList.add('given');
             }
         }
     }
 
-    // --- Stats Logic ---
     function loadStats() {
         const savedStats = localStorage.getItem('sudokuStats');
-        if (savedStats) {
-            const parsed = JSON.parse(savedStats);
-            // This merges the old saved stats with the new default stats 
-            // so totalCorrect and totalMistakes don't break if they are missing
-            stats = { ...stats, ...parsed };
-        }
+        if (savedStats) stats = { ...stats, ...JSON.parse(savedStats) };
     }
-
-    function saveStats() {
-        localStorage.setItem('sudokuStats', JSON.stringify(stats));
-    }
-
+    function saveStats() { localStorage.setItem('sudokuStats', JSON.stringify(stats)); }
     function showStats() {
         document.getElementById('stat-easy').textContent = stats.easy;
         document.getElementById('stat-medium').textContent = stats.medium;
@@ -248,21 +320,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('stat-extreme').textContent = stats.extreme;
         document.getElementById('stat-correct').textContent = stats.totalCorrect;
         document.getElementById('stat-mistakes').textContent = stats.totalMistakes;
-
         boardEl.classList.add('hidden');
         victoryScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
         statsScreen.classList.remove('hidden');
     }
-
     function hideStats() {
         statsScreen.classList.add('hidden');
-        if (correctCount !== targetCorrectCount) {
-            boardEl.classList.remove('hidden');
-        } else {
-            victoryScreen.classList.remove('hidden');
-        }
+        if (mistakeCount >= 5 && difficultySelect.value === 'extreme') gameOverScreen.classList.remove('hidden');
+        else if (correctCount !== targetCorrectCount) boardEl.classList.remove('hidden');
+        else victoryScreen.classList.remove('hidden');
     }
-
     function resetStats() {
         if(confirm("Are you sure you want to clear your stats?")) {
             stats = { easy: 0, medium: 0, hard: 0, extreme: 0, totalCorrect: 0, totalMistakes: 0 };
@@ -271,13 +339,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Generator Logic ---
     function generateBoard() {
         const board = new Array(81).fill(0);
         solve(board);
         return board;
     }
-
     function solve(board) {
         for (let i = 0; i < 81; i++) {
             if (board[i] === 0) {
@@ -294,24 +360,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return true;
     }
-
     function isValid(board, index, num) {
-        const row = Math.floor(index / 9);
-        const col = index % 9;
-        const startRow = Math.floor(row / 3) * 3;
-        const startCol = Math.floor(col / 3) * 3;
-
+        const row = Math.floor(index / 9), col = index % 9;
+        const startRow = Math.floor(row / 3) * 3, startCol = Math.floor(col / 3) * 3;
         for (let i = 0; i < 9; i++) {
             if (board[row * 9 + i] === num) return false;
             if (board[i * 9 + col] === num) return false;
-            
-            const boxRow = startRow + Math.floor(i / 3);
-            const boxCol = startCol + (i % 3);
+            const boxRow = startRow + Math.floor(i / 3), boxCol = startCol + (i % 3);
             if (board[boxRow * 9 + boxCol] === num) return false;
         }
         return true;
     }
-
     function removeNumbers(board, count) {
         let removed = 0;
         while (removed < count) {

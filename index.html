@@ -11,8 +11,8 @@
         <header>
             <div class="left-controls">
                 <button id="reset-btn" aria-label="Reset Puzzle">↺</button>
-                <button id="stats-btn" aria-label="View Stats">T</button>
-                <button id="assistant-btn" aria-label="Assistant Mode">🔍</button>
+                <button id="stats-btn" aria-label="View Stats">%</button>
+                <button id="assistant-btn" aria-label="Assistant Mode">⌕</button>
                 <button id="stencil-btn" aria-label="Stencil Mode">✎</button>
             </div>
             <h1>Sudoku</h1>
@@ -27,7 +27,10 @@
         <div class="status-bar">
             <span id="correct-display">0 CORRECT</span>
             <span id="diff-display">EXTREME</span>
-            <span id="mistake-display">0 MISTAKES <span id="extreme-warning">(MAX 5)</span></span>
+            <span class="right-status">
+                <span id="mistake-display">0 MISTAKES</span>
+                <span id="extreme-warning" class="hidden">(MAX 5)</span>
+            </span>
         </div>
 
         <div id="sudoku-board"></div>

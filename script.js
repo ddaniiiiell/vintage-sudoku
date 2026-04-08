@@ -107,7 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (selectedCellIndex === index && !isAssistantActive) {
+        // The Fix: Allow unselecting if clicking the same box, regardless of assistant mode
+        if (selectedCellIndex === index) {
             clearHighlights();
             selectedCellIndex = null;
             return;

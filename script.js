@@ -73,7 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
             stencilBtn.classList.toggle('active-mode', isStencilActive);
         });
 
-        // Global Eraser
         eraserBtn.addEventListener('click', () => {
             cells.forEach(cell => {
                 if (!cell.classList.contains('given') && !cell.classList.contains('user-input')) {
@@ -187,30 +186,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return; 
         }
 
-        // Deleting
         if (value === '') {
             cell.innerHTML = '';
             return;
         }
 
-        // Checking Correctness
         if (parseInt(value) === solvedBoard[selectedCellIndex]) {
             cell.innerHTML = `<span class="value">${value}</span>`;
             cell.classList.add('user-input');
             clearHighlights();
             
+            // THE FIX: Store the active index before it gets wiped
+            const currentIndex = selectedCellIndex;
+
             if (!isAssistantActive) selectedCellIndex = null;
             else selectCell(selectedCellIndex);
 
-            // Auto-erase matching stencils from axis and box
-            autoEraseStencils(selectedCellIndex, value);
+            // Run features on the saved index
+            autoEraseStencils(currentIndex, value);
 
             correctCount++;
             correctDisplay.textContent = `${correctCount} CORRECT`;
             stats.totalCorrect++;
             saveStats();
 
-            checkCompletion(selectedCellIndex);
+            checkCompletion(currentIndex);
+            
             if (correctCount === targetCorrectCount) handleWin();
 
         } else {
@@ -224,7 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
             stats.totalMistakes++;
             saveStats();
 
-            // Extreme Penalty logic changed to 6
             if (difficultySelect.value === 'extreme' && mistakeCount >= 6) {
                 setTimeout(() => {
                     boardEl.classList.add('hidden');

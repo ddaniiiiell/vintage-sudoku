@@ -51,6 +51,7 @@ header {
 /* Added #info-btn to remove the default white box background */
 #reset-btn, #stats-btn, #assistant-btn, #stencil-btn, #info-btn {
     background: none;
+    
     border: none;
     color: var(--text-primary);
     font-size: 1.2rem;

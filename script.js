@@ -186,36 +186,42 @@ document.addEventListener('DOMContentLoaded', () => {
             return; 
         }
 
+        // Deleting
         if (value === '') {
             cell.innerHTML = '';
             return;
         }
 
+        // Checking Correctness
         if (parseInt(value) === solvedBoard[selectedCellIndex]) {
             cell.innerHTML = `<span class="value">${value}</span>`;
             cell.classList.add('user-input');
             clearHighlights();
             
-            // THE FIX: Store the active index before it gets wiped
-            const currentIndex = selectedCellIndex;
-
             if (!isAssistantActive) selectedCellIndex = null;
             else selectCell(selectedCellIndex);
 
-            // Run features on the saved index
-            autoEraseStencils(currentIndex, value);
+            // Auto-erase matching stencils from axis and box
+            autoEraseStencils(selectedCellIndex, value);
 
             correctCount++;
             correctDisplay.textContent = `${correctCount} CORRECT`;
             stats.totalCorrect++;
             saveStats();
 
-            checkCompletion(currentIndex);
-            
+            checkCompletion(selectedCellIndex);
             if (correctCount === targetCorrectCount) handleWin();
 
         } else {
-            cell.innerHTML = ''; 
+            // Update: Remove wrong guess from stencils if they exist, otherwise clear cell
+            const container = cell.querySelector('.stencil-container');
+            if (container) {
+                const targetNum = container.querySelector(`[data-val="${value}"]`);
+                if (targetNum) targetNum.textContent = '';
+            } else {
+                cell.innerHTML = ''; 
+            }
+            
             boardEl.classList.remove('rumble'); 
             void boardEl.offsetWidth; 
             boardEl.classList.add('rumble');

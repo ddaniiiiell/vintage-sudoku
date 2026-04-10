@@ -88,6 +88,8 @@ h1 {
     border-radius: 5px;
     outline: none;
     cursor: pointer;
+    text-align: center;
+    text-align-last: center;
 }
 
 .status-bar {

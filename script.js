@@ -194,23 +194,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Checking Correctness
         if (parseInt(value) === solvedBoard[selectedCellIndex]) {
+            const currentIndex = selectedCellIndex; // Store the index just in case
+            
             cell.innerHTML = `<span class="value">${value}</span>`;
             cell.classList.add('user-input');
             clearHighlights();
-            
-            if (!isAssistantActive) selectedCellIndex = null;
-            else selectCell(selectedCellIndex);
 
             // Auto-erase matching stencils from axis and box
-            autoEraseStencils(selectedCellIndex, value);
+            autoEraseStencils(currentIndex, value);
 
             correctCount++;
             correctDisplay.textContent = `${correctCount} CORRECT`;
             stats.totalCorrect++;
             saveStats();
 
-            checkCompletion(selectedCellIndex);
+            checkCompletion(currentIndex);
             if (correctCount === targetCorrectCount) handleWin();
+            
+            // Handle selection clearing at the very end
+            if (!isAssistantActive) selectedCellIndex = null;
+            else selectCell(currentIndex);
 
         } else {
             // Update: Remove wrong guess from stencils if they exist, otherwise clear cell

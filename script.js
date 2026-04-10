@@ -43,14 +43,41 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStats();
         createBoard();
         createNumpad();
-        
+
         // Try to load a saved game; if none exists, start a new one
         if (!loadGameState()) {
             startNewGame();
         }
 
         resetBtn.addEventListener('click', startNewGame);
-        // ... (keep the rest of your init function exactly the same until the eraser block)
+        
+        difficultySelect.addEventListener('change', (e) => {
+            diffDisplay.textContent = e.target.value.toUpperCase();
+            startNewGame();
+        });
+        
+        newGameBtn.addEventListener('click', startNewGame);
+        tryAgainBtn.addEventListener('click', startNewGame);
+        document.addEventListener('keydown', handleKeyPress);
+
+        statsBtn.addEventListener('click', showStats);
+        closeStatsBtn.addEventListener('click', hideStats);
+        resetStatsBtn.addEventListener('click', resetStats);
+
+        infoBtn.addEventListener('click', showInfo);
+        closeInfoBtn.addEventListener('click', hideInfo);
+
+        assistantBtn.addEventListener('click', () => {
+            isAssistantActive = !isAssistantActive;
+            assistantBtn.classList.toggle('active-mode', isAssistantActive);
+            clearHighlights();
+            if (selectedCellIndex !== null) selectCell(selectedCellIndex);
+        });
+
+        stencilBtn.addEventListener('click', () => {
+            isStencilActive = !isStencilActive;
+            stencilBtn.classList.toggle('active-mode', isStencilActive);
+        });
 
         eraserBtn.addEventListener('click', () => {
             cells.forEach(cell => {
@@ -61,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
-            saveGameState(); // <-- ADD THIS to save after erasing
+            saveGameState(); 
         });
     }
 

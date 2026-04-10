@@ -43,35 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStats();
         createBoard();
         createNumpad();
-        startNewGame();
+        
+        // Try to load a saved game; if none exists, start a new one
+        if (!loadGameState()) {
+            startNewGame();
+        }
 
         resetBtn.addEventListener('click', startNewGame);
-        difficultySelect.addEventListener('change', (e) => {
-            diffDisplay.textContent = e.target.value.toUpperCase();
-            startNewGame();
-        });
-        newGameBtn.addEventListener('click', startNewGame);
-        tryAgainBtn.addEventListener('click', startNewGame);
-        document.addEventListener('keydown', handleKeyPress);
-
-        statsBtn.addEventListener('click', showStats);
-        closeStatsBtn.addEventListener('click', hideStats);
-        resetStatsBtn.addEventListener('click', resetStats);
-
-        infoBtn.addEventListener('click', showInfo);
-        closeInfoBtn.addEventListener('click', hideInfo);
-
-        assistantBtn.addEventListener('click', () => {
-            isAssistantActive = !isAssistantActive;
-            assistantBtn.classList.toggle('active-mode', isAssistantActive);
-            clearHighlights();
-            if (selectedCellIndex !== null) selectCell(selectedCellIndex);
-        });
-
-        stencilBtn.addEventListener('click', () => {
-            isStencilActive = !isStencilActive;
-            stencilBtn.classList.toggle('active-mode', isStencilActive);
-        });
+        // ... (keep the rest of your init function exactly the same until the eraser block)
 
         eraserBtn.addEventListener('click', () => {
             cells.forEach(cell => {
@@ -82,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+            saveGameState(); // <-- ADD THIS to save after erasing
         });
     }
 
@@ -183,12 +163,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetNum) {
                 targetNum.textContent = targetNum.textContent === value ? '' : value;
             }
+            saveGameState();
             return; 
         }
 
         // Deleting
         if (value === '') {
             cell.innerHTML = '';
+            saveGameState();
             return;
         }
 
@@ -215,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isAssistantActive) selectedCellIndex = null;
             else selectCell(currentIndex);
 
+            saveGameState();
         } else {
             // Update: Remove wrong guess from stencils if they exist, otherwise clear cell
             const container = cell.querySelector('.stencil-container');
@@ -241,6 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     gameOverScreen.classList.remove('hidden');
                 }, 400);
             }
+
+            saveGameState();
         }
     }
 
@@ -360,6 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 cells[i].classList.add('given');
             }
         }
+
+        saveGameState();
     }
 
     // --- Stats & Info Logic ---
@@ -367,8 +354,93 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedStats = localStorage.getItem('sudokuStats');
         if (savedStats) stats = { ...stats, ...JSON.parse(savedStats) };
     }
-    function saveStats() { localStorage.setItem('sudokuStats', JSON.stringify(stats)); }
     
+    function saveStats() { 
+        localStorage.setItem('sudokuStats', JSON.stringify(stats)); 
+    }
+    
+    function saveGameState() {
+        const boardState = cells.map(cell => {
+            let state = { type: 'empty', value: null, stencils: [] };
+            if (cell.classList.contains('given')) {
+                state.type = 'given';
+                state.value = parseInt(cell.querySelector('.value').textContent);
+            } else if (cell.classList.contains('user-input')) {
+                state.type = 'user-input';
+                state.value = parseInt(cell.querySelector('.value').textContent);
+            } else {
+                const container = cell.querySelector('.stencil-container');
+                if (container) {
+                    state.stencils = Array.from(container.querySelectorAll('.stencil-num'))
+                        .map(n => n.textContent)
+                        .filter(t => t !== '');
+                }
+            }
+            return state;
+        });
+
+        const gameState = {
+            difficulty: difficultySelect.value,
+            correctCount,
+            mistakeCount,
+            targetCorrectCount,
+            solvedBoard,
+            boardState
+        };
+        localStorage.setItem('sudokuGameState', JSON.stringify(gameState));
+    }
+
+    function loadGameState() {
+        const savedState = localStorage.getItem('sudokuGameState');
+        if (!savedState) return false;
+
+        const gameState = JSON.parse(savedState);
+        
+        // Prevent loading a game that was already won or lost
+        if (gameState.correctCount === gameState.targetCorrectCount || (gameState.difficulty === 'extreme' && gameState.mistakeCount >= 6)) {
+            return false;
+        }
+
+        difficultySelect.value = gameState.difficulty;
+        diffDisplay.textContent = gameState.difficulty.toUpperCase();
+        
+        correctCount = gameState.correctCount;
+        mistakeCount = gameState.mistakeCount;
+        targetCorrectCount = gameState.targetCorrectCount;
+        solvedBoard = gameState.solvedBoard;
+
+        correctDisplay.textContent = `${correctCount} CORRECT`;
+        mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
+        if (gameState.difficulty === 'extreme') extremeWarning.classList.remove('hidden');
+        else extremeWarning.classList.add('hidden');
+
+        cells.forEach((cell, i) => {
+            cell.innerHTML = '';
+            cell.classList.remove('given', 'user-input', 'selected', 'highlight-axis', 'highlight-match');
+            
+            const state = gameState.boardState[i];
+            if (state.type === 'given') {
+                cell.innerHTML = `<span class="value">${state.value}</span>`;
+                cell.classList.add('given');
+            } else if (state.type === 'user-input') {
+                cell.innerHTML = `<span class="value">${state.value}</span>`;
+                cell.classList.add('user-input');
+            } else if (state.stencils.length > 0) {
+                cell.innerHTML = '<div class="stencil-container"></div>';
+                const container = cell.querySelector('.stencil-container');
+                for(let s=1; s<=9; s++) {
+                    const sDiv = document.createElement('div');
+                    sDiv.className = 'stencil-num';
+                    sDiv.dataset.val = s;
+                    if (state.stencils.includes(s.toString())) sDiv.textContent = s;
+                    container.appendChild(sDiv);
+                }
+            }
+        });
+
+        return true; // Successfully loaded
+    }
+
     function showStats() {
         document.getElementById('stat-easy').textContent = stats.easy;
         document.getElementById('stat-medium').textContent = stats.medium;
@@ -458,6 +530,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+
 
     init();
 });

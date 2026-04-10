@@ -391,54 +391,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadGameState() {
-        const savedState = localStorage.getItem('sudokuGameState');
-        if (!savedState) return false;
+        try {
+            const savedState = localStorage.getItem('sudokuGameState');
+            if (!savedState) return false;
 
-        const gameState = JSON.parse(savedState);
-        
-        // Prevent loading a game that was already won or lost
-        if (gameState.correctCount === gameState.targetCorrectCount || (gameState.difficulty === 'extreme' && gameState.mistakeCount >= 6)) {
+            const gameState = JSON.parse(savedState);
+            
+            // Validate that the save file is completely intact
+            if (!gameState || !gameState.boardState || !gameState.difficulty) {
+                localStorage.removeItem('sudokuGameState'); // Clear the bad save
+                return false;
+            }
+
+            // Prevent loading a game that was already won or lost
+            if (gameState.correctCount === gameState.targetCorrectCount || (gameState.difficulty === 'extreme' && gameState.mistakeCount >= 6)) {
+                return false;
+            }
+
+            difficultySelect.value = gameState.difficulty;
+            diffDisplay.textContent = gameState.difficulty.toUpperCase();
+            
+            correctCount = gameState.correctCount;
+            mistakeCount = gameState.mistakeCount;
+            targetCorrectCount = gameState.targetCorrectCount;
+            solvedBoard = gameState.solvedBoard;
+
+            correctDisplay.textContent = `${correctCount} CORRECT`;
+            mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
+            if (gameState.difficulty === 'extreme') extremeWarning.classList.remove('hidden');
+            else extremeWarning.classList.add('hidden');
+
+            cells.forEach((cell, i) => {
+                cell.innerHTML = '';
+                cell.classList.remove('given', 'user-input', 'selected', 'highlight-axis', 'highlight-match');
+                
+                const state = gameState.boardState[i];
+                if (state.type === 'given') {
+                    cell.innerHTML = `<span class="value">${state.value}</span>`;
+                    cell.classList.add('given');
+                } else if (state.type === 'user-input') {
+                    cell.innerHTML = `<span class="value">${state.value}</span>`;
+                    cell.classList.add('user-input');
+                } else if (state.stencils && state.stencils.length > 0) {
+                    cell.innerHTML = '<div class="stencil-container"></div>';
+                    const container = cell.querySelector('.stencil-container');
+                    for(let s=1; s<=9; s++) {
+                        const sDiv = document.createElement('div');
+                        sDiv.className = 'stencil-num';
+                        sDiv.dataset.val = s;
+                        if (state.stencils.includes(s.toString())) sDiv.textContent = s;
+                        container.appendChild(sDiv);
+                    }
+                }
+            });
+
+            return true; // Successfully loaded
+        } catch (error) {
+            console.error("Save file corrupted, starting fresh.", error);
+            localStorage.removeItem('sudokuGameState');
             return false;
         }
-
-        difficultySelect.value = gameState.difficulty;
-        diffDisplay.textContent = gameState.difficulty.toUpperCase();
-        
-        correctCount = gameState.correctCount;
-        mistakeCount = gameState.mistakeCount;
-        targetCorrectCount = gameState.targetCorrectCount;
-        solvedBoard = gameState.solvedBoard;
-
-        correctDisplay.textContent = `${correctCount} CORRECT`;
-        mistakeDisplay.textContent = `${mistakeCount} MISTAKES`;
-        if (gameState.difficulty === 'extreme') extremeWarning.classList.remove('hidden');
-        else extremeWarning.classList.add('hidden');
-
-        cells.forEach((cell, i) => {
-            cell.innerHTML = '';
-            cell.classList.remove('given', 'user-input', 'selected', 'highlight-axis', 'highlight-match');
-            
-            const state = gameState.boardState[i];
-            if (state.type === 'given') {
-                cell.innerHTML = `<span class="value">${state.value}</span>`;
-                cell.classList.add('given');
-            } else if (state.type === 'user-input') {
-                cell.innerHTML = `<span class="value">${state.value}</span>`;
-                cell.classList.add('user-input');
-            } else if (state.stencils.length > 0) {
-                cell.innerHTML = '<div class="stencil-container"></div>';
-                const container = cell.querySelector('.stencil-container');
-                for(let s=1; s<=9; s++) {
-                    const sDiv = document.createElement('div');
-                    sDiv.className = 'stencil-num';
-                    sDiv.dataset.val = s;
-                    if (state.stencils.includes(s.toString())) sDiv.textContent = s;
-                    container.appendChild(sDiv);
-                }
-            }
-        });
-
-        return true; // Successfully loaded
     }
 
     function showStats() {

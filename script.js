@@ -285,24 +285,33 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkCompletion(index) {
         const row = Math.floor(index / 9);
         const col = index % 9;
-        const boxStartRow = Math.floor(row / 3) * 3;
-        const boxStartCol = Math.floor(col / 3) * 3;
-
+        
         let rComplete = true, cComplete = true, bComplete = true;
         const rCells = [], cCells = [], bCells = [];
 
+        // 1. Check Row (Waves Left to Right)
         for (let i = 0; i < 9; i++) {
-            const rIdx = row * 9 + i;
-            rCells.push(cells[rIdx]);
-            if (!cells[rIdx].classList.contains('given') && !cells[rIdx].classList.contains('user-input')) rComplete = false;
+            const cell = cells[row * 9 + i];
+            rCells.push(cell);
+            if (!cell.classList.contains('given') && !cell.classList.contains('user-input')) rComplete = false;
+        }
 
-            const cIdx = i * 9 + col;
-            cCells.push(cells[cIdx]);
-            if (!cells[cIdx].classList.contains('given') && !cells[cIdx].classList.contains('user-input')) cComplete = false;
+        // 2. Check Column (Waves Top to Bottom)
+        for (let i = 0; i < 9; i++) {
+            const cell = cells[i * 9 + col];
+            cCells.push(cell);
+            if (!cell.classList.contains('given') && !cell.classList.contains('user-input')) cComplete = false;
+        }
 
-            const bIdx = (boxStartRow + Math.floor(i / 3)) * 9 + (boxStartCol + (i % 3));
-            bCells.push(cells[bIdx]);
-            if (!cells[bIdx].classList.contains('given') && !cells[bIdx].classList.contains('user-input')) bComplete = false;
+        // 3. Check Box (Waves Top-Left to Bottom-Right zigzag)
+        const boxStartRow = Math.floor(row / 3) * 3;
+        const boxStartCol = Math.floor(col / 3) * 3;
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                const cell = cells[(boxStartRow + r) * 9 + (boxStartCol + c)];
+                bCells.push(cell);
+                if (!cell.classList.contains('given') && !cell.classList.contains('user-input')) bComplete = false;
+            }
         }
 
         if (rComplete) triggerWave(rCells);

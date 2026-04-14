@@ -259,15 +259,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function autoEraseStencils(index, val) {
         const row = Math.floor(index / 9);
         const col = index % 9;
-        const startRow = Math.floor(row / 3) * 3;
-        const startCol = Math.floor(col / 3) * 3;
 
+        // 1. Erase from Row
         for (let i = 0; i < 9; i++) {
             clearStencilVal(row * 9 + i, val);
+        }
+
+        // 2. Erase from Column
+        for (let i = 0; i < 9; i++) {
             clearStencilVal(i * 9 + col, val);
-            const boxRow = startRow + Math.floor(i / 3);
-            const boxCol = startCol + (i % 3);
-            clearStencilVal(boxRow * 9 + boxCol, val);
+        }
+
+        // 3. Erase from 3x3 Box
+        const boxStartRow = Math.floor(row / 3) * 3;
+        const boxStartCol = Math.floor(col / 3) * 3;
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                clearStencilVal((boxStartRow + r) * 9 + (boxStartCol + c), val);
+            }
         }
     }
 

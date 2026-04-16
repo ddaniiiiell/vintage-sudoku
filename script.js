@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const extremeWarning = document.getElementById('extreme-warning');
     
     const victoryScreen = document.getElementById('victory-screen');
+    const victoryTitle = document.getElementById('victory-title'); 
     const gameOverScreen = document.getElementById('game-over-screen');
     const newGameBtn = document.getElementById('new-game-btn');
     const tryAgainBtn = document.getElementById('try-again-btn');
@@ -345,6 +346,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentDiff = difficultySelect.value;
         stats[currentDiff]++;
         saveStats();
+
+        // Check for a flawless game
+        if (mistakeCount === 0) {
+            victoryTitle.textContent = "Perfect Solve!";
+        } else {
+            victoryTitle.textContent = "Puzzle Solved!";
+        }
+
         setTimeout(() => {
             boardEl.classList.add('hidden');
             numpadEl.classList.add('hidden');
